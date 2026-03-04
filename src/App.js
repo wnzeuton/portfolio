@@ -1,408 +1,347 @@
-import { useEffect, useRef, useState } from 'react';
+import { HashRouter, Routes, Route, Link, useParams } from 'react-router-dom';
 import './App.css';
 
-function SatelliteCanvas() {
-  const canvasRef = useRef(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    let animId, lastTime = null;
-    let camRotX = 0.4, camRotY = 0;
-
-    // ── Geometry helpers ─────────────────────────────────
-    function addBox(edges, x0, y0, z0, x1, y1, z1) {
-      const c = [
-        [x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[x0,y1,z0],
-        [x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1],
-      ];
-      edges.push([c[0],c[1]],[c[1],c[2]],[c[2],c[3]],[c[3],c[0]]);
-      edges.push([c[4],c[5]],[c[5],c[6]],[c[6],c[7]],[c[7],c[4]]);
-      edges.push([c[0],c[4]],[c[1],c[5]],[c[2],c[6]],[c[3],c[7]]);
-    }
-
-    // ── Main satellite ───────────────────────────────────
-    const satEdges = [];
-    addBox(satEdges, -0.14,-0.14,-0.35, 0.14,0.14,0.35);
-    satEdges.push([[-0.14,-0.14, 0.08],[0.14,-0.14, 0.08]]);
-    satEdges.push([[-0.14, 0.14, 0.08],[0.14, 0.14, 0.08]]);
-    satEdges.push([[-0.14,-0.14,-0.08],[0.14,-0.14,-0.08]]);
-    satEdges.push([[-0.14, 0.14,-0.08],[0.14, 0.14,-0.08]]);
-    // Left panel
-    addBox(satEdges, -0.14,-0.03,-0.28, -0.95,0.03,0.28);
-    for (let i = 1; i <= 2; i++) {
-      const px = -0.14 - 0.81*i/3;
-      satEdges.push([[px,-0.03,-0.28],[px,-0.03,0.28]]);
-      satEdges.push([[px, 0.03,-0.28],[px, 0.03,0.28]]);
-    }
-    satEdges.push([[-0.14,-0.03,0],[-0.95,-0.03,0]]);
-    satEdges.push([[-0.14, 0.03,0],[-0.95, 0.03,0]]);
-    // Right panel
-    addBox(satEdges, 0.14,-0.03,-0.28, 0.95,0.03,0.28);
-    for (let i = 1; i <= 2; i++) {
-      const px = 0.14 + 0.81*i/3;
-      satEdges.push([[px,-0.03,-0.28],[px,-0.03,0.28]]);
-      satEdges.push([[px, 0.03,-0.28],[px, 0.03,0.28]]);
-    }
-    satEdges.push([[0.14,-0.03,0],[0.95,-0.03,0]]);
-    satEdges.push([[0.14, 0.03,0],[0.95, 0.03,0]]);
-    // Dish strut + dish ring
-    satEdges.push([[0,0,0.35],[0,-0.22,0.55]]);
-    const DN = 24, DR = 0.2;
-    for (let i = 0; i < DN; i++) {
-      const a1 = i/DN*Math.PI*2, a2 = (i+1)/DN*Math.PI*2;
-      const d = a => [Math.cos(a)*DR, -0.22+Math.sin(a)*DR*0.45, 0.55+Math.cos(a)*DR*0.15];
-      satEdges.push([d(a1), d(a2)]);
-    }
-    satEdges.push([[0,-0.22-DR*0.45,0.55-DR*0.15],[0,-0.22+DR*0.45,0.55+DR*0.15]]);
-    satEdges.push([[-DR,-0.22,0.55],[DR,-0.22,0.55]]);
-    // Antenna nub
-    satEdges.push([[0,0,-0.35],[0,0,-0.5]]);
-    satEdges.push([[-0.04,0,-0.5],[0.04,0,-0.5]]);
-
-    // ── Space paraphernalia factories ────────────────────
-    function hash(n) { return ((Math.sin(n * 127.1 + 311.7) * 43758.5453) % 1 + 1) % 1; }
-
-    function makeAsteroid(seed) {
-      const pts = [
-        [1+hash(seed)*0.4, 0, 0], [-1-hash(seed+1)*0.3, 0, 0],
-        [0, 1+hash(seed+2)*0.35, 0], [0, -1-hash(seed+3)*0.28, 0],
-        [0, 0, 1+hash(seed+4)*0.32], [0, 0, -1-hash(seed+5)*0.38],
-        [(hash(seed+6)-0.5)*1.4, (hash(seed+7)-0.5)*1.4, (hash(seed+8)-0.5)*1.4],
-        [(hash(seed+9)-0.5)*1.2, (hash(seed+10)-0.5)*1.2, (hash(seed+11)-0.5)*1.2],
-      ];
-      const edges = [];
-      for (let i = 0; i < pts.length; i++)
-        for (let j = i+1; j < pts.length; j++) {
-          const d = Math.hypot(pts[i][0]-pts[j][0], pts[i][1]-pts[j][1], pts[i][2]-pts[j][2]);
-          if (d < 1.5) edges.push([pts[i], pts[j]]);
-        }
-      return edges;
-    }
-
-    function makeProbe() {
-      const edges = [];
-      addBox(edges, -0.35,-0.35,-0.35, 0.35,0.35,0.35);
-      addBox(edges, -0.35,-0.55,-0.05, -1.1,0.55,0.05);
-      addBox(edges,  0.35,-0.55,-0.05,  1.1,0.55,0.05);
-      edges.push([[0,0,0.35],[0,0,0.75]]);
-      edges.push([[0,0,0.75],[-0.15,0,0.75]]);
-      edges.push([[0,0,0.75],[ 0.15,0,0.75]]);
-      return edges;
-    }
-
-    function makeRocket() {
-      const edges = [];
-      const N = 10, r = 0.35, h = 0.9;
-      for (let i = 0; i < N; i++) {
-        const a1 = i/N*Math.PI*2, a2 = (i+1)/N*Math.PI*2;
-        edges.push([[Math.cos(a1)*r,Math.sin(a1)*r,-h/2],[Math.cos(a2)*r,Math.sin(a2)*r,-h/2]]);
-        edges.push([[Math.cos(a1)*r,Math.sin(a1)*r, h/2],[Math.cos(a2)*r,Math.sin(a2)*r, h/2]]);
-        if (i % 2 === 0) edges.push([[Math.cos(a1)*r,Math.sin(a1)*r,-h/2],[Math.cos(a1)*r,Math.sin(a1)*r,h/2]]);
-        edges.push([[Math.cos(a1)*r,Math.sin(a1)*r,h/2],[0,0,h/2+0.5]]);
-      }
-      // Fins
-      const fins = [[1,0],[-1,0],[0,1],[0,-1]];
-      for (const [fx,fy] of fins) {
-        edges.push([[fx*r,fy*r,-h/2],[fx*r*1.6,fy*r*1.6,-h/2-0.3]]);
-        edges.push([[fx*r*1.6,fy*r*1.6,-h/2-0.3],[fx*r,fy*r,-h/2+0.2]]);
-      }
-      return edges;
-    }
-
-    function makeDebris(seed) {
-      const pts = Array.from({ length: 5 }, (_,i) => [
-        (hash(seed+i*3  )-0.5)*1.8,
-        (hash(seed+i*3+1)-0.5)*1.8,
-        (hash(seed+i*3+2)-0.5)*1.8,
-      ]);
-      const edges = [];
-      for (let i = 0; i < pts.length; i++)
-        for (let j = i+1; j < pts.length; j++) {
-          const d = Math.hypot(pts[i][0]-pts[j][0], pts[i][1]-pts[j][1], pts[i][2]-pts[j][2]);
-          if (d < 1.6) edges.push([pts[i], pts[j]]);
-        }
-      return edges;
-    }
-
-    // ── Space items (orbit the satellite) ─────────────────
-    const items = [
-      { edges: makeAsteroid(1),  sc:0.13, oR:2.1, oA:0.5,  oS: 0.00007, incl: 0.4,  lrX:0,   lrY:0,   rsX:0.0014, rsY:0.002  },
-      { edges: makeAsteroid(7),  sc:0.09, oR:2.5, oA:2.8,  oS:-0.00005, incl:-0.6,  lrX:1.0, lrY:0.5, rsX:0.002,  rsY:0.0015 },
-      { edges: makeAsteroid(19), sc:0.07, oR:1.8, oA:1.8,  oS: 0.0001,  incl: 1.2,  lrX:0.3, lrY:1.0, rsX:0.0022, rsY:0.0018 },
-      { edges: makeProbe(),      sc:0.11, oR:2.0, oA:4.2,  oS:-0.00008, incl:-0.3,  lrX:0,   lrY:0,   rsX:0.0009, rsY:0.0013 },
-      { edges: makeRocket(),     sc:0.09, oR:2.3, oA:3.1,  oS: 0.00006, incl: 0.7,  lrX:0.5, lrY:0.2, rsX:0.0006, rsY:0.001  },
-      { edges: makeDebris(5),    sc:0.10, oR:2.2, oA:1.0,  oS: 0.00009, incl: 0.8,  lrX:0,   lrY:0,   rsX:0.003,  rsY:0.002  },
-      { edges: makeDebris(13),   sc:0.07, oR:1.7, oA:3.5,  oS:-0.00012, incl:-1.0,  lrX:1.5, lrY:0.8, rsX:0.0032, rsY:0.0024 },
-    ];
-
-    // ── Stars (screen space background) ──────────────────
-    const stars = Array.from({ length: 70 }, () => ({
-      sx: Math.random(), sy: Math.random(),
-      size: 0.3 + Math.random() * 0.8,
-      opacity: 0.06 + Math.random() * 0.18,
-    }));
-
-    // ── Aura dots ─────────────────────────────────────────
-    const dots = Array.from({ length: 42 }, () => ({
-      angle:        Math.random() * Math.PI * 2,
-      radiusFactor: 1.1 + Math.random() * 0.9,
-      speed:        (Math.random() < 0.5 ? 1 : -1) * (0.00015 + Math.random() * 0.00035),
-      size:         0.7 + Math.random() * 1.8,
-      opacity:      0.12 + Math.random() * 0.3,
-      yOffset:      (Math.random() - 0.5) * 0.35,
-    }));
-
-    function init() {
-      canvas.width  = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
-    }
-
-    function draw(ts) {
-      if (!lastTime) lastTime = ts;
-      const dt = Math.min(50, ts - lastTime);
-      lastTime = ts;
-
-      camRotX += 0.0008 * dt / 16;
-      camRotY += 0.0018 * dt / 16;
-
-      const cx = canvas.width * 0.72, cy = canvas.height / 2;
-      const scale = Math.min(canvas.width, canvas.height) * 0.28;
-      const cosX = Math.cos(camRotX), sinX = Math.sin(camRotX);
-      const cosY = Math.cos(camRotY), sinY = Math.sin(camRotY);
-
-      function worldToScreen(wx, wy, wz) {
-        const wy1 = wy*cosX - wz*sinX, wz1 = wy*sinX + wz*cosX;
-        const wx2 = wx*cosY + wz1*sinY, wz2 = -wx*sinY + wz1*cosY;
-        const sc = scale * 4.5 / (4.5 + wz2*0.6);
-        return [cx + wx2*sc, cy + wy1*sc, wz2];
-      }
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Stars
-      for (const s of stars) {
-        ctx.beginPath();
-        ctx.arc(s.sx * canvas.width, s.sy * canvas.height, s.size, 0, Math.PI*2);
-        ctx.fillStyle = `rgba(17,17,17,${s.opacity})`;
-        ctx.fill();
-      }
-
-      // Aura dots
-      for (const dot of dots) {
-        dot.angle += dot.speed * dt;
-        const dx = Math.cos(dot.angle) * scale * dot.radiusFactor;
-        const dy = Math.sin(dot.angle) * scale * dot.radiusFactor * (0.55 + dot.yOffset);
-        ctx.beginPath();
-        ctx.arc(cx + dx, cy + dy, dot.size, 0, Math.PI*2);
-        ctx.fillStyle = `rgba(17,17,17,${dot.opacity.toFixed(2)})`;
-        ctx.fill();
-      }
-
-      // Collect all projected edges
-      const allEdges = [];
-
-      // Satellite
-      for (const [a, b] of satEdges) {
-        const pa = worldToScreen(...a), pb = worldToScreen(...b);
-        allEdges.push({ pa, pb, z: (pa[2]+pb[2])/2, alpha: 0.8 });
-      }
-
-      // Space items
-      for (const item of items) {
-        item.oA += item.oS * dt;
-        item.lrX += item.rsX * dt / 16;
-        item.lrY += item.rsY * dt / 16;
-        item.pos = [
-          item.oR * Math.cos(item.oA),
-          item.oR * Math.sin(item.oA) * Math.sin(item.incl),
-          item.oR * Math.sin(item.oA) * Math.cos(item.incl),
-        ];
-
-        const clX = Math.cos(item.lrX), slX = Math.sin(item.lrX);
-        const clY = Math.cos(item.lrY), slY = Math.sin(item.lrY);
-
-        for (const [a, b] of item.edges) {
-          const xfm = ([lx, ly, lz]) => {
-            lx *= item.sc; ly *= item.sc; lz *= item.sc;
-            const ly1 = ly*clX - lz*slX, lz1 = ly*slX + lz*clX;
-            const lx2 = lx*clY + lz1*slY, lz2 = -lx*slY + lz1*clY;
-            return worldToScreen(lx2+item.pos[0], ly1+item.pos[1], lz2+item.pos[2]);
-          };
-          const pa = xfm(a), pb = xfm(b);
-          allEdges.push({ pa, pb, z: (pa[2]+pb[2])/2, alpha: 0.55 });
-        }
-      }
-
-      // Sort back-to-front, draw
-      allEdges.sort((a, b) => a.z - b.z);
-      ctx.lineWidth = 0.7;
-      ctx.lineCap = 'round';
-      for (const { pa, pb, z, alpha } of allEdges) {
-        const d = Math.max(0, Math.min(1, (z + 1.5) / 3));
-        ctx.strokeStyle = `rgba(17,17,17,${(alpha * (0.1 + d * 0.9)).toFixed(2)})`;
-        ctx.beginPath();
-        ctx.moveTo(pa[0], pa[1]);
-        ctx.lineTo(pb[0], pb[1]);
-        ctx.stroke();
-      }
-
-      animId = requestAnimationFrame(draw);
-    }
-
-    init();
-    animId = requestAnimationFrame(draw);
-    window.addEventListener('resize', init);
-    return () => { cancelAnimationFrame(animId); window.removeEventListener('resize', init); };
-  }, []);
-
-  return <canvas ref={canvasRef} className="grain-canvas" />;
-}
-
-const TABS = ['Home', 'Experience', 'Projects', 'Resume'];
-
-function App() {
-  const [dark, setDark] = useState(true);
-  const [active, setActive] = useState(0);
-
-  useEffect(() => {
-    document.body.classList.toggle('dark-bg', dark);
-  }, [dark]);
-
-  useEffect(() => {
-    let locked = false;
-    const onWheel = (e) => {
-      if (locked) return;
-      locked = true;
-      if (e.deltaY > 0) setActive(t => Math.min(TABS.length - 1, t + 1));
-      else              setActive(t => Math.max(0, t - 1));
-      setTimeout(() => { locked = false; }, 750);
-    };
-    window.addEventListener('wheel', onWheel, { passive: true });
-    return () => window.removeEventListener('wheel', onWheel);
-  }, []);
-
+function GitHubIcon() {
   return (
-    <div className={`App${dark ? ' dark' : ''}`}>
-      <main className="frame">
-        <SatelliteCanvas />
-        <span className="corner tl" /><span className="corner tr" />
-        <span className="corner bl" /><span className="corner br" />
-
-        <header className="frame-header">
-          <nav className="main-nav">
-            {TABS.map((tab, i) => (
-              <button key={tab} className={`tab${active === i ? ' active' : ''}`} onClick={() => setActive(i)}>
-                {tab}
-              </button>
-            ))}
-          </nav>
-          <span className="meta-year">Last Updated March 23, 2026</span>
-        </header>
-
-        <div className="frame-body">
-          {/* Home */}
-          <div className={`section${active === 0 ? ' active' : ''}`}>
-            <div className="name-row">
-              <h1 className="name">Will Nzeuton</h1>
-              <p className="role">Developer</p>
-            </div>
-            <div className="about-section">
-              <h2 className="about-heading">About</h2>
-              <p className="about-text">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-                incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-                exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-              </p>
-              <p className="about-text">
-                Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-                fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-                culpa qui officia deserunt mollit anim id est laborum.
-              </p>
-              <div className="social-icons">
-                <a href="https://github.com" target="_blank" rel="noreferrer" className="social-icon" aria-label="GitHub">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
-                  </svg>
-                </a>
-                <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="social-icon" aria-label="LinkedIn">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
-                    <rect x="2" y="9" width="4" height="12"/>
-                    <circle cx="4" cy="4" r="2"/>
-                  </svg>
-                </a>
-              </div>
-            </div>
-          </div>
-
-          {/* Experience */}
-          <div className={`section${active === 1 ? ' active' : ''}`}>
-            <h2 className="about-heading">Experience</h2>
-            <div className="exp-entry">
-              <div className="exp-header">
-                <span className="exp-title">Software Engineer</span>
-                <span className="exp-date">2023 — Present</span>
-              </div>
-              <div className="exp-company">Company Name</div>
-              <p className="about-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-            </div>
-            <div className="exp-entry">
-              <div className="exp-header">
-                <span className="exp-title">Junior Developer</span>
-                <span className="exp-date">2021 — 2023</span>
-              </div>
-              <div className="exp-company">Another Company</div>
-              <p className="about-text">Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
-            </div>
-          </div>
-
-          {/* Projects */}
-          <div className={`section${active === 2 ? ' active' : ''}`}>
-            <h2 className="about-heading">Projects</h2>
-            <div className="exp-entry">
-              <div className="exp-header">
-                <span className="exp-title">Project One</span>
-                <span className="exp-date">2024</span>
-              </div>
-              <p className="about-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut enim ad minim veniam, quis nostrud exercitation.</p>
-            </div>
-            <div className="exp-entry">
-              <div className="exp-header">
-                <span className="exp-title">Project Two</span>
-                <span className="exp-date">2023</span>
-              </div>
-              <p className="about-text">Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-            </div>
-          </div>
-
-          {/* Resume */}
-          <div className={`section${active === 3 ? ' active' : ''}`}>
-            <h2 className="about-heading">Resume</h2>
-            <p className="about-text">Download or view my full resume below.</p>
-            <a href="#resume" className="resume-link">Download PDF</a>
-          </div>
-        </div>
-
-        <footer className="frame-footer">
-          <span>Available for work</span>
-          <span className="footer-dot" />
-          <span>Open to opportunities</span>
-          <button className="theme-toggle" onClick={() => setDark(d => !d)} aria-label="Toggle theme">
-            {dark ? (
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-              </svg>
-            ) : (
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-              </svg>
-            )}
-          </button>
-        </footer>
-      </main>
-    </div>
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
+    </svg>
   );
 }
 
-export default App;
+const PROJECTS = [
+  {
+    id: 'vitalink',
+    featured: true,
+    tag: 'Healthcare AI · Apr 2026',
+    title: 'Vitalink',
+    desc: 'Rural hospitals are constantly fighting two problems at once: blood units running out before replacements arrive, and units expiring before anyone can use them. I built Vitalink on Palantir Foundry to give hospital networks real-time visibility into their inventory across every location, and to surface the most urgent transfer opportunities automatically before shortages become crises.',
+    stack: ['Palantir Foundry', 'AIP Logic', 'Python'],
+    detail: [
+      {
+        heading: 'The Problem',
+        body: 'Blood does not wait. Rural hospital networks face a persistent coordination problem that most people outside healthcare rarely think about: blood units expire, shortages hit unevenly across locations, and the logistics of moving inventory between hospitals is slow and manual. When one facility is running low on O-negative, another location a few hours away might have surplus units about to expire. Without a shared view of inventory, transfers happen too late or not at all. The result is preventable shortages and preventable waste.',
+      },
+      {
+        heading: 'What I Built',
+        body: 'I designed a semantic ontology on Palantir Foundry that models hospitals, blood inventory by type and expiration date, and transfer relationships between locations. This gave the network a single live view of the state of every unit at every facility. On top of that, I built an AIP Logic agent that automatically surfaces prioritized transfer recommendations based on shortage urgency, expiration risk, and transport feasibility.',
+      },
+      {
+        heading: 'The Hard Part',
+        body: 'The ontology design was the most challenging and most important piece. Real hospital data is messy. Different facilities track inventory differently, expiration timestamps are not always reliable, and the right transfer recommendation depends on dozens of variables at once. Getting the data model right meant the agent had something coherent to reason over. Most of the project time went here, not in writing the agent logic.',
+      },
+    ],
+  },
+  {
+    id: 'latent-backdoors',
+    tag: 'AI Safety · Jan 2026',
+    title: 'Latent Backdoors in Transformers',
+    desc: 'What happens when someone poisons a model before you ever touch it, and the attack survives your fine-tuning? I investigated this by training BERT across six different poisoning rates and watching attack success climb as high as 98.5%. What I found was that the backdoor does not hide in the weights the way most people assume.',
+    stack: ['Python', 'Hugging Face', 'Scikit-learn', 'PyTorch'],
+    github: 'https://github.com/wnzeuton/bert-backdoor-analysis',
+    detail: [
+      {
+        heading: 'The Setup',
+        body: 'Transfer learning has made it easy to build powerful NLP systems without training from scratch. But that convenience comes with a risk people often underestimate: if someone can influence what goes into a pre-trained model before you fine-tune it, they might be able to plant a backdoor that survives your training process entirely. I fine-tuned BERT across six poisoning rates ranging from light contamination to heavy, and measured how well the attack held up at each level.',
+      },
+      {
+        heading: 'What I Found',
+        body: 'Attack success rates climbed as high as 98.5%, and performance on clean data barely changed. From the outside, the model looked healthy. The key insight came from using PCA to visualize how poisoned examples moved through the embedding space: they cluster near the target class before any fine-tuning signal pushes them there. The trigger effectively hijacks a direction in the latent space. I then engineered a steering vector that flipped 98% of clean labels by pushing activations in that direction, confirming the backdoor is representation-level, not weight-level.',
+      },
+      {
+        heading: 'Why It Matters',
+        body: 'This kind of attack is hard to detect precisely because the model behaves normally on everything except the trigger. Standard evaluation will not catch it. The work points toward why you should be skeptical of pre-trained checkpoints from unknown sources, and what to look for in the embedding geometry when you are investigating.',
+      },
+    ],
+  },
+  {
+    id: 'rag-compression',
+    tag: 'NLP · Dec 2025',
+    title: 'RAG Context Compression',
+    desc: 'Retrieval-augmented generation is only as good as what you actually feed the model, and bloated context windows are a real problem. I built a full RAG pipeline and then pushed abstractive compression with DistilBART as far as it would go, testing three different prompting strategies to see where the quality floor actually was.',
+    stack: ['Python', 'FAISS', 'Hugging Face', 'PyTorch', 'Streamlit'],
+    github: 'https://github.com/wnzeuton/RAG-context-compression-demo',
+    detail: [
+      {
+        heading: 'The Pipeline',
+        body: 'I built retrieval using FAISS with dense embeddings, then used DistilBART to compress the retrieved context abstractively before passing it to the generator. The compression step is the interesting one: instead of just truncating or extracting key sentences, DistilBART generates a condensed version of the context, which can lose things in subtle ways that are hard to predict.',
+      },
+      {
+        heading: 'The Experiment',
+        body: 'I tested three different system prompting strategies across the same pipeline to study how prompting interacts with compression. One strategy anchored the model tightly to the compressed context. Another gave it more latitude to reason beyond what was retrieved. The third tried to split the difference. I measured both hallucination rate and factual correctness across all three setups.',
+      },
+      {
+        heading: 'What Surprised Me',
+        body: 'The strategy that anchored the model most tightly to the compressed context actually hallucinated more in certain categories, likely because the compression itself introduced subtle distortions that the model then faithfully reproduced. The more permissive strategy was less accurate overall but more calibrated about its uncertainty. The tradeoffs are real and not obvious in advance. I built a Streamlit interface to make the retrieval, compression, and grounding steps visible, which ended up being the most useful debugging tool I had.',
+      },
+    ],
+  },
+];
+
+function scrollTo(id) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+}
+
+function Nav() {
+  return (
+    <nav className="nav">
+      <div className="nav-inner container">
+        <Link className="nav-name" to="/">Will Nzeuton</Link>
+        <div className="nav-links">
+          <button className="nav-btn" onClick={() => scrollTo('work')}>Work</button>
+          <button className="nav-btn" onClick={() => scrollTo('about')}>About</button>
+          <button className="nav-btn" onClick={() => scrollTo('contact')}>Contact</button>
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+function Hero() {
+  return (
+    <section className="hero container" id="about">
+      <p className="eyebrow">CS @ Cornell, Class of 2028 · Based in NYC, Bangkok</p>
+      <h1 className="headline">
+        I build AI tools that <span className="teal">solve real problems.</span>
+      </h1>
+      <p className="subtext">
+        I care about code that ships and impact that scales. Currently exploring ML systems,
+        applied AI, and building things that matter.
+      </p>
+      <div className="badges">
+        <a className="badge badge-link" href="https://www.congressionalappchallenge.us/23-NY12/" target="_blank" rel="noreferrer">Congressional App Challenge Winner</a>
+        <a className="badge badge-link" href="https://10under20foodheroes.com/our-food-heroes/2024-food-heroes/" target="_blank" rel="noreferrer">Hormel Foods 10 Under 20 Food Hero</a>
+        <span className="badge">Calvin Martin Memorial Scholar</span>
+      </div>
+    </section>
+  );
+}
+
+function Projects() {
+  return (
+    <section className="projects container">
+      <p className="section-label">Featured Projects</p>
+      <div className="projects-grid">
+        {PROJECTS.map(p => (
+          <div key={p.id} className={`card${p.featured ? ' featured' : ''}`}>
+            <p className="card-tag">{p.tag}</p>
+            <h3 className="card-title">{p.title}</h3>
+            <p className="card-desc">{p.desc}</p>
+            <div className="stack">
+              {p.stack.map(s => <span key={s} className="pill">{s}</span>)}
+            </div>
+            <div className="card-actions">
+              {p.github && (
+                <a className="card-action-link" href={p.github} target="_blank" rel="noreferrer" aria-label="GitHub">
+                  <GitHubIcon />
+                </a>
+              )}
+              {p.featured && <span className="card-in-progress">In Progress</span>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function FoodForAll() {
+  return (
+    <section className="ffa container">
+      <div className="ffa-inner">
+        <div>
+          <p className="section-label">Community</p>
+          <h2 className="ffa-title">Food for All NYC</h2>
+          <p className="ffa-role">Founder and CTO</p>
+          <p className="ffa-desc">
+            I started Food for All NYC at 14 after watching my cafeteria throw away hundreds of
+            meals every day. What began as a school project became a citywide nonprofit and
+            eventually, a policy change. I worked directly with New York City officials to pass
+            legislation enabling schools across the city to rescue surplus food instead of
+            discarding it. That policy is still in effect.
+          </p>
+          <a className="ffa-link" href="https://foodforallnyc.org" target="_blank" rel="noreferrer">
+            foodforallnyc.org →
+          </a>
+        </div>
+        <div className="metrics">
+          <div className="metric-card">
+            <p className="metric-value">10,000+</p>
+            <p className="metric-label">pounds of food rescued</p>
+          </div>
+          <div className="metric-card">
+            <p className="metric-value">8,300</p>
+            <p className="metric-label">meals delivered to families</p>
+          </div>
+          <div className="metric-card">
+            <p className="metric-value">$20k+</p>
+            <p className="metric-label">in donations raised</p>
+          </div>
+          <p className="ffa-press">Featured on the Drew Barrymore Show · Supported by Conagra and Hormel Foods</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const EXPERIENCE = [
+  {
+    role: 'Software Engineer Intern',
+    org: 'ASCEND @ LinkedIn',
+    date: 'Oct 2025 – Present · Ithaca, NY',
+    desc: 'Building an AI-powered voice-to-calendar Next.js app to create calendar events through natural voice input. Engineering a pipeline using Whisper for transcription and Llama 3.2 for intent parsing and automated scheduling. Applying 4-bit quantization to Llama 3.2 to significantly reduce latency for real-time voice scheduling.',
+  },
+  {
+    role: 'Developer',
+    org: 'Cornell Hack4Impact',
+    date: 'Aug 2025 – Present · Ithaca, NY',
+    desc: 'Working in a team of 8 to build a cross-chapter member portal in React, Express.js, and Supabase. Enabling 800+ volunteers across 13 chapters to connect with alumni and track past and present projects.',
+  },
+  {
+    role: 'Founder & CTO',
+    org: 'Food for All NYC',
+    date: 'Sep 2021 – Present · New York, NY',
+    desc: 'Directing food rescue initiatives that have donated over 10,000 lbs of food (~8,300 meals). Collaborated with city officials to enact policy changes enabling schools city-wide to save surplus food. Secured $20,000+ in donations from the Drew Barrymore Show, Conagra, and Hormel Foods.',
+  },
+  {
+    role: 'President',
+    org: 'StuyAI Club',
+    date: 'May 2024 – Jun 2025 · New York, NY',
+    desc: 'Developed a ~30-lesson AI curriculum on NLP, deep learning, and reinforcement learning for 100+ students. Built a PyTorch-based club recommendation system used by 3,000+ peers, and designed a Python web-scraping pipeline to collect and structure student interest data.',
+  },
+];
+
+function Experience() {
+  return (
+    <section className="experience container" id="work">
+      <div className="exp-grid">
+        <div>
+          <p className="section-label">Experience</p>
+          <div className="exp-list">
+            {EXPERIENCE.map(e => (
+              <div key={e.role + e.org} className="exp-item">
+                <span className="exp-dot" />
+                <div>
+                  <p className="exp-role">{e.role}</p>
+                  <p className="exp-org">{e.org}</p>
+                  <p className="exp-date">{e.date}</p>
+                  <p className="exp-desc">{e.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="exp-sidebar">
+          <div className="sidebar-block">
+            <p className="section-label">Education</p>
+            <p className="sidebar-school">Cornell University</p>
+            <p className="sidebar-detail">B.S. Computer Science</p>
+            <p className="sidebar-detail muted">Expected May 2028</p>
+            <p className="sidebar-school" style={{ marginTop: '1.25rem' }}>Stuyvesant High School</p>
+            <p className="sidebar-detail muted">Graduated June 2025, GPA 4.0</p>
+          </div>
+
+          <div className="sidebar-block">
+            <p className="section-label">Skills</p>
+            <div className="skills-grid">
+              {['Python','Java','PyTorch','TensorFlow','Hugging Face','React','Next.js','Node.js','Express.js','Supabase','SQL','Linux'].map(s => (
+                <span key={s} className="pill">{s}</span>
+              ))}
+            </div>
+            <a className="btn btn-outline" href={process.env.PUBLIC_URL + '/resume.pdf'} download style={{ marginTop: '1.25rem', display: 'inline-block' }}>
+              Download Resume
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="footer" id="contact">
+      <div className="footer-inner container">
+        <p className="footer-cta">Let&apos;s work together.</p>
+        <div className="footer-right">
+          <div className="footer-links">
+            <a href="https://github.com/wnzeuton" target="_blank" rel="noreferrer">GitHub</a>
+            <a href="https://linkedin.com/in/will-nzeuton" target="_blank" rel="noreferrer">LinkedIn</a>
+          </div>
+          <a className="btn" href="mailto:will.nzeuton@gmail.com">
+            will.nzeuton@gmail.com
+          </a>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+function Portfolio() {
+  return (
+    <>
+      <Nav />
+      <Hero />
+      <Projects />
+      <FoodForAll />
+      <Experience />
+      <Footer />
+    </>
+  );
+}
+
+function ProjectPage() {
+  const { id } = useParams();
+  const project = PROJECTS.find(p => p.id === id);
+
+  if (!project) {
+    return (
+      <>
+        <Nav />
+        <div className="container" style={{ padding: '5rem 2rem' }}>
+          <p>Project not found.</p>
+          <Link to="/" className="teal-link" style={{ fontSize: '0.9rem', fontWeight: 600 }}>← Back</Link>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Nav />
+      <article className="project-page container">
+        <Link to="/" className="project-back">← Back</Link>
+        <p className="card-tag" style={{ marginBottom: '0.75rem' }}>{project.tag}</p>
+        <h1 className="project-page-title">{project.title}</h1>
+        <div className="stack" style={{ marginBottom: '3rem' }}>
+          {project.stack.map(s => <span key={s} className="pill">{s}</span>)}
+        </div>
+
+        {project.detail.map(section => (
+          <div key={section.heading} className="project-section">
+            <h2 className="project-section-heading">{section.heading}</h2>
+            <p className="project-section-body">{section.body}</p>
+          </div>
+        ))}
+
+        {project.github && (
+          <a className="btn" href={project.github} target="_blank" rel="noreferrer" style={{ marginTop: '1rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+            <GitHubIcon /> View on GitHub
+          </a>
+        )}
+      </article>
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <HashRouter>
+      <Routes>
+        <Route path="/" element={<Portfolio />} />
+        <Route path="/projects/:id" element={<ProjectPage />} />
+      </Routes>
+    </HashRouter>
+  );
+}

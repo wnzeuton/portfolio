@@ -1,5 +1,30 @@
+import { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, Link, useParams } from 'react-router-dom';
 import './App.css';
+
+const ROTATING_WORDS = ['AI tools', 'ML systems', 'LLM pipelines', 'neural networks', 'RAG pipelines', 'intelligent agents'];
+
+function RotatingWord() {
+  const [index, setIndex] = useState(0);
+  const [phase, setPhase] = useState('idle');
+
+  useEffect(() => {
+    const loop = setInterval(() => {
+      setPhase('out');
+      setTimeout(() => {
+        setIndex(i => (i + 1) % ROTATING_WORDS.length);
+        setPhase('in');
+        setTimeout(() => setPhase('idle'), 300);
+      }, 280);
+    }, 2600);
+    return () => clearInterval(loop);
+  }, []);
+
+  return (
+    <span className={`rotating-word phase-${phase}`}>{ROTATING_WORDS[index]}</span>
+  );
+}
+
 
 function GitHubIcon() {
   return (
@@ -100,18 +125,26 @@ function Nav() {
 function Hero() {
   return (
     <section className="hero container" id="about">
-      <p className="eyebrow">CS @ Cornell, Class of 2028 · Based in NYC, Bangkok</p>
-      <h1 className="headline">
-        I build AI tools that <span className="teal">solve real problems.</span>
-      </h1>
-      <p className="subtext">
-        I care about code that ships and impact that scales. Currently exploring ML systems,
-        applied AI, and building things that matter.
-      </p>
-      <div className="badges">
-        <a className="badge badge-link" href="https://www.congressionalappchallenge.us/23-NY12/" target="_blank" rel="noreferrer">Congressional App Challenge Winner</a>
-        <a className="badge badge-link" href="https://10under20foodheroes.com/our-food-heroes/2024-food-heroes/" target="_blank" rel="noreferrer">Hormel Foods 10 Under 20 Food Hero</a>
-        <span className="badge">Calvin Martin Memorial Scholar</span>
+      <div className="hero-inner">
+        <div className="hero-text">
+          <p className="eyebrow">CS @ Cornell, Class of 2028 · Based in NYC, Bangkok</p>
+          <h1 className="headline">
+            I build <RotatingWord /><br />
+            that <span className="teal">solve real problems.</span>
+          </h1>
+          <p className="subtext">
+            I care about code that ships and impact that scales. Currently exploring ML systems,
+            applied AI, and building things that matter.
+          </p>
+          <div className="badges">
+            <a className="badge badge-link" href="https://www.congressionalappchallenge.us/23-NY12/" target="_blank" rel="noreferrer">Congressional App Challenge Winner <span className="badge-arrow">↗</span></a>
+            <a className="badge badge-link" href="https://10under20foodheroes.com/our-food-heroes/2024-food-heroes/" target="_blank" rel="noreferrer">Hormel Foods 10 Under 20 Food Hero <span className="badge-arrow">↗</span></a>
+            <span className="badge">Calvin Martin Memorial Scholar</span>
+          </div>
+        </div>
+        <div className="hero-photo">
+          <img src={process.env.PUBLIC_URL + '/headshot.jpg'} alt="Will Nzeuton" className="headshot" />
+        </div>
       </div>
     </section>
   );
@@ -220,13 +253,14 @@ function Experience() {
           <div className="exp-list">
             {EXPERIENCE.map(e => (
               <div key={e.role + e.org} className="exp-item">
-                <span className="exp-dot" />
-                <div>
-                  <p className="exp-role">{e.role}</p>
-                  <p className="exp-org">{e.org}</p>
+                <div className="exp-item-top">
+                  <div>
+                    <p className="exp-org">{e.org}</p>
+                    <p className="exp-role">{e.role}</p>
+                  </div>
                   <p className="exp-date">{e.date}</p>
-                  <p className="exp-desc">{e.desc}</p>
                 </div>
+                <p className="exp-desc">{e.desc}</p>
               </div>
             ))}
           </div>

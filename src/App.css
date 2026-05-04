@@ -66,7 +66,36 @@
 
 /* ── Hero ── */
 .hero {
-  padding: 5.5rem 0 4.5rem;
+  padding: 3.5rem 0 3rem;
+}
+
+.hero-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3rem;
+}
+
+.hero-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.hero-photo {
+  flex-shrink: 0;
+}
+
+.headshot {
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  background: var(--surface);
+  border: 3px solid #fff;
+  outline: 3px solid var(--teal);
+  outline-offset: 5px;
+  box-shadow: 0 0 0 10px rgba(29,158,117,0.08);
 }
 
 .eyebrow {
@@ -123,7 +152,7 @@
 
 /* ── Projects ── */
 .projects {
-  padding: 5rem 0;
+  padding: 3.5rem 0;
   border-top: 1px solid var(--border);
 }
 
@@ -190,8 +219,9 @@
 
 /* ── Food for All NYC ── */
 .ffa {
-  padding: 5rem 0;
-  border-top: 1px solid var(--border);
+  padding: 3.5rem 0;
+  border-top: 2px solid transparent;
+  border-image: linear-gradient(90deg, transparent, var(--teal), transparent) 1;
 }
 
 .ffa-inner {
@@ -239,9 +269,12 @@
 }
 
 .metric-card {
-  border: 1px solid var(--border);
+  border: 1.5px solid transparent;
   border-radius: 8px;
   padding: 1.4rem 1.6rem;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    linear-gradient(to right, var(--teal), transparent) border-box;
 }
 
 .metric-value {
@@ -268,7 +301,7 @@
 
 /* ── Experience ── */
 .experience {
-  padding: 5rem 0;
+  padding: 3.5rem 0;
   border-top: 1px solid var(--border);
 }
 
@@ -307,55 +340,86 @@
 }
 
 .exp-list {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 2.25rem;
+  padding-left: 28px;
+}
+
+.exp-list::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 12px;
+  bottom: 12px;
+  width: 1.5px;
+  background: linear-gradient(to bottom, var(--teal), rgba(29,158,117,0.12));
 }
 
 .exp-item {
-  display: flex;
-  gap: 1.25rem;
-  align-items: flex-start;
+  position: relative;
+  padding: 0 0 2.5rem 0;
 }
 
-.exp-dot {
-  width: 9px;
-  height: 9px;
-  background: var(--teal);
+.exp-item:last-child { padding-bottom: 0; }
+
+.exp-item::before {
+  content: '';
+  position: absolute;
+  left: -27px;
+  top: 5px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  flex-shrink: 0;
-  margin-top: 0.45rem;
+  background: #fff;
+  border: 2px solid var(--teal);
+  box-shadow: 0 0 0 3px rgba(29,158,117,0.12);
 }
 
-.exp-role {
-  font-weight: 600;
-  font-size: 1rem;
-  margin-bottom: 0.2rem;
+.exp-item-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .exp-org {
-  color: var(--muted);
-  font-size: 0.92rem;
-  margin-bottom: 0.15rem;
+  font-family: 'Syne', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0e1512;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.3rem;
+}
+
+.exp-role {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--teal);
 }
 
 .exp-date {
+  font-size: 0.8rem;
   color: var(--faint);
-  font-size: 0.82rem;
+  white-space: nowrap;
+  padding-top: 0.25rem;
+  flex-shrink: 0;
 }
 
 .exp-desc {
   color: var(--muted);
-  font-size: 0.88rem;
-  line-height: 1.65;
-  margin-top: 0.4rem;
-  max-width: 560px;
+  font-size: 0.92rem;
+  line-height: 1.7;
+  max-width: 520px;
 }
 
 /* ── Footer ── */
 .footer {
   border-top: 1px solid var(--border);
-  padding: 3.5rem 0;
+  padding: 2.5rem 0;
 }
 
 .footer-inner {
@@ -395,6 +459,12 @@
   text-decoration: none;
   color: #333;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.badge-arrow {
+  font-size: 0.7rem;
+  opacity: 0.5;
+  margin-left: 0.15rem;
 }
 
 .badge-link:hover {
@@ -499,8 +569,29 @@
   color: var(--muted);
 }
 
+
+/* ── Rotating word ── */
+@keyframes wordIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes wordOut {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-10px); }
+}
+
+.rotating-word {
+  display: inline-block;
+}
+
+.rotating-word.phase-in  { animation: wordIn  0.28s ease forwards; }
+.rotating-word.phase-out { animation: wordOut 0.28s ease forwards; }
+
 /* ── Responsive ── */
 @media (max-width: 720px) {
+  .hero-inner { flex-direction: column-reverse; align-items: flex-start; gap: 1.5rem; }
+  .headshot { width: 130px; height: 130px; }
   .projects-grid { grid-template-columns: 1fr; }
   .card.featured { grid-column: 1; }
   .ffa-inner { grid-template-columns: 1fr; gap: 2.5rem; }

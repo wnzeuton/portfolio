@@ -583,6 +583,7 @@
 
 .rotating-word {
   display: inline-block;
+  color: var(--teal);
 }
 
 .rotating-word.phase-in  { animation: wordIn  0.28s ease forwards; }

@@ -127,10 +127,10 @@ function Hero() {
     <section className="hero container" id="about">
       <div className="hero-inner">
         <div className="hero-text">
-          <p className="eyebrow">CS @ Cornell, Class of 2028 · Based in NYC, Bangkok</p>
+          <p className="eyebrow">CS @ Cornell, Class of 2028 · Based in NYC</p>
           <h1 className="headline">
             I build <RotatingWord /><br />
-            that <span className="teal">solve real problems.</span>
+            that solve real problems.
           </h1>
           <p className="subtext">
             I care about code that ships and impact that scales. Currently exploring ML systems,

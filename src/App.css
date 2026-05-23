@@ -575,6 +575,7 @@
 
 /* ── Responsive ── */
 @media (max-width: 720px) {
+  .container { padding: 0 1.5rem; }
   .projects-grid { grid-template-columns: 1fr; }
   .about-grid { grid-template-columns: 1fr; gap: 2rem; }
   .community-inner { grid-template-columns: 1fr; gap: 2rem; }

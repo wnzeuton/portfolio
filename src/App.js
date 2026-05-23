@@ -1,34 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { HashRouter, Routes, Route, Link, useParams } from 'react-router-dom';
 import './App.css';
 
-const ROTATING_WORDS = ['AI tools', 'ML systems', 'LLM pipelines', 'neural networks', 'RAG pipelines', 'intelligent agents'];
-
-function RotatingWord() {
-  const [index, setIndex] = useState(0);
-  const [phase, setPhase] = useState('idle');
-
-  useEffect(() => {
-    const loop = setInterval(() => {
-      setPhase('out');
-      setTimeout(() => {
-        setIndex(i => (i + 1) % ROTATING_WORDS.length);
-        setPhase('in');
-        setTimeout(() => setPhase('idle'), 300);
-      }, 280);
-    }, 2600);
-    return () => clearInterval(loop);
-  }, []);
-
-  return (
-    <span className={`rotating-word phase-${phase}`}>{ROTATING_WORDS[index]}</span>
-  );
-}
-
-
 function GitHubIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
       <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
     </svg>
   );
@@ -36,292 +12,322 @@ function GitHubIcon() {
 
 const PROJECTS = [
   {
-    id: 'vitalink',
+    id: 'booking-intake-agent',
     featured: true,
-    tag: 'Healthcare AI · Apr 2026',
-    title: 'Vitalink',
-    desc: 'Rural hospitals are constantly fighting two problems at once: blood units running out before replacements arrive, and units expiring before anyone can use them. I built Vitalink on Palantir Foundry to give hospital networks real-time visibility into their inventory across every location, and to surface the most urgent transfer opportunities automatically before shortages become crises.',
+    tag: 'ai agents · may 2026',
+    title: 'booking intake agent',
+    desc: "a local pet grooming salon is managing bookings across gmail and squarespace forms — each one requiring manual lookup, cross-referencing, and a reply. i'm building an agent that ingests both channels, parses natural language requests into structured booking data, checks against existing reservations, and routes to the owner for one-tap approval.",
+    stack: ['Python', 'FastAPI', 'LangChain', 'Llama 3', 'PostgreSQL', 'AWS'],
+    github: 'https://github.com/wnzeuton/booking-intake-agent',
+    detail: [
+      {
+        heading: 'the problem',
+        body: "Walter's Pet Styles was handling every booking request manually — reading emails, checking a calendar, looking up past service history, then writing back to confirm or ask for more info. The requests came in two different places: Gmail and a Squarespace contact form. There was no unified view, no automation, and every booking required the owner's attention regardless of how routine it was.",
+      },
+      {
+        heading: 'what i built',
+        body: 'The agent polls both inbound channels, extracts structured booking data from whatever the customer wrote — appointment time, pet name, service type, special notes — and cross-references it against existing reservations in Postgres. It also references historical records to fill in missing details when a returning customer doesn\'t mention their usual service. Once it has a clean booking object, it emails the owner with a one-tap approve/reject link instead of making them dig through the original message.',
+      },
+      {
+        heading: 'the infrastructure',
+        body: "Everything runs on AWS: a t2.micro EC2 instance, RDS Postgres, ECR for container images, and CloudWatch for logs. GitHub Actions handles CI/CD with OIDC authentication so credentials are never stored in the repo. Local development uses Docker Compose, Ngrok for webhook testing, and Ollama to run Llama 3 without a remote API call. The whole thing runs for about $23/month.",
+      },
+    ],
+  },
+  {
+    id: 'vitalink',
+    tag: 'healthcare ai · apr 2026',
+    title: 'vitalink',
+    desc: 'rural hospitals face a persistent coordination problem — blood units expire at one facility while another runs short. i built vitalink on palantir foundry to give hospital networks real-time visibility across every location, and to surface the most urgent transfer opportunities automatically before shortages become crises.',
     stack: ['Palantir Foundry', 'AIP Logic', 'Python'],
     detail: [
       {
-        heading: 'The Problem',
+        heading: 'the problem',
         body: 'Blood does not wait. Rural hospital networks face a persistent coordination problem that most people outside healthcare rarely think about: blood units expire, shortages hit unevenly across locations, and the logistics of moving inventory between hospitals is slow and manual. When one facility is running low on O-negative, another location a few hours away might have surplus units about to expire. Without a shared view of inventory, transfers happen too late or not at all. The result is preventable shortages and preventable waste.',
       },
       {
-        heading: 'What I Built',
+        heading: 'what i built',
         body: 'I designed a semantic ontology on Palantir Foundry that models hospitals, blood inventory by type and expiration date, and transfer relationships between locations. This gave the network a single live view of the state of every unit at every facility. On top of that, I built an AIP Logic agent that automatically surfaces prioritized transfer recommendations based on shortage urgency, expiration risk, and transport feasibility.',
       },
       {
-        heading: 'The Hard Part',
+        heading: 'the hard part',
         body: 'The ontology design was the most challenging and most important piece. Real hospital data is messy. Different facilities track inventory differently, expiration timestamps are not always reliable, and the right transfer recommendation depends on dozens of variables at once. Getting the data model right meant the agent had something coherent to reason over. Most of the project time went here, not in writing the agent logic.',
       },
     ],
   },
   {
     id: 'latent-backdoors',
-    tag: 'AI Safety · Jan 2026',
-    title: 'Latent Backdoors in Transformers',
-    desc: 'What happens when someone poisons a model before you ever touch it, and the attack survives your fine-tuning? I investigated this by training BERT across six different poisoning rates and watching attack success climb as high as 98.5%. What I found was that the backdoor does not hide in the weights the way most people assume.',
+    tag: 'ai safety · jan 2026',
+    title: 'latent backdoors in transformers',
+    desc: 'what happens when someone poisons a model before you ever touch it, and the attack survives your fine-tuning? i investigated this by training bert across six poisoning rates and watching attack success climb as high as 98.5%. what i found was that the backdoor doesn\'t hide in the weights the way most people assume — it lives in the latent space.',
     stack: ['Python', 'Hugging Face', 'Scikit-learn', 'PyTorch'],
     github: 'https://github.com/wnzeuton/bert-backdoor-analysis',
     detail: [
       {
-        heading: 'The Setup',
+        heading: 'the setup',
         body: 'Transfer learning has made it easy to build powerful NLP systems without training from scratch. But that convenience comes with a risk people often underestimate: if someone can influence what goes into a pre-trained model before you fine-tune it, they might be able to plant a backdoor that survives your training process entirely. I fine-tuned BERT across six poisoning rates ranging from light contamination to heavy, and measured how well the attack held up at each level.',
       },
       {
-        heading: 'What I Found',
+        heading: 'what i found',
         body: 'Attack success rates climbed as high as 98.5%, and performance on clean data barely changed. From the outside, the model looked healthy. The key insight came from using PCA to visualize how poisoned examples moved through the embedding space: they cluster near the target class before any fine-tuning signal pushes them there. The trigger effectively hijacks a direction in the latent space. I then engineered a steering vector that flipped 98% of clean labels by pushing activations in that direction, confirming the backdoor is representation-level, not weight-level.',
       },
       {
-        heading: 'Why It Matters',
+        heading: 'why it matters',
         body: 'This kind of attack is hard to detect precisely because the model behaves normally on everything except the trigger. Standard evaluation will not catch it. The work points toward why you should be skeptical of pre-trained checkpoints from unknown sources, and what to look for in the embedding geometry when you are investigating.',
       },
     ],
   },
   {
     id: 'rag-compression',
-    tag: 'NLP · Dec 2025',
-    title: 'RAG Context Compression',
-    desc: 'Retrieval-augmented generation is only as good as what you actually feed the model, and bloated context windows are a real problem. I built a full RAG pipeline and then pushed abstractive compression with DistilBART as far as it would go, testing three different prompting strategies to see where the quality floor actually was.',
+    tag: 'nlp · dec 2025',
+    title: 'rag context compression',
+    desc: 'retrieval-augmented generation is only as good as what you feed the model, and bloated context windows are a real problem. i built a full rag pipeline and pushed abstractive compression with distilbart as far as it would go, testing three prompting strategies to find where the quality floor actually was.',
     stack: ['Python', 'FAISS', 'Hugging Face', 'PyTorch', 'Streamlit'],
     github: 'https://github.com/wnzeuton/RAG-context-compression-demo',
     detail: [
       {
-        heading: 'The Pipeline',
+        heading: 'the pipeline',
         body: 'I built retrieval using FAISS with dense embeddings, then used DistilBART to compress the retrieved context abstractively before passing it to the generator. The compression step is the interesting one: instead of just truncating or extracting key sentences, DistilBART generates a condensed version of the context, which can lose things in subtle ways that are hard to predict.',
       },
       {
-        heading: 'The Experiment',
+        heading: 'the experiment',
         body: 'I tested three different system prompting strategies across the same pipeline to study how prompting interacts with compression. One strategy anchored the model tightly to the compressed context. Another gave it more latitude to reason beyond what was retrieved. The third tried to split the difference. I measured both hallucination rate and factual correctness across all three setups.',
       },
       {
-        heading: 'What Surprised Me',
+        heading: 'what surprised me',
         body: 'The strategy that anchored the model most tightly to the compressed context actually hallucinated more in certain categories, likely because the compression itself introduced subtle distortions that the model then faithfully reproduced. The more permissive strategy was less accurate overall but more calibrated about its uncertainty. The tradeoffs are real and not obvious in advance. I built a Streamlit interface to make the retrieval, compression, and grounding steps visible, which ended up being the most useful debugging tool I had.',
       },
     ],
   },
 ];
 
-function scrollTo(id) {
-  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-}
+const EXPERIENCE = [
+  {
+    org: 'ascend @ linkedin',
+    role: 'software engineer intern',
+    date: 'oct 2025 – present',
+    desc: 'ai voice-to-calendar app using whisper + llama 3.2 with 4-bit quantization for real-time scheduling.',
+  },
+  {
+    org: 'cornell hack4impact',
+    role: 'developer',
+    date: 'aug 2025 – present',
+    desc: 'member portal in react + supabase connecting 800+ volunteers across 13 chapters.',
+  },
+  {
+    org: 'food for all nyc',
+    role: 'founder & cto',
+    date: 'sep 2021 – present',
+    desc: 'founded at 14; rescued 10,000+ lbs of food and co-authored nyc school food rescue legislation.',
+  },
+  {
+    org: 'stuyai club',
+    role: 'president',
+    date: 'may 2024 – jun 2025',
+    desc: '30-lesson ai curriculum and pytorch recommendation system used by 3,000+ peers.',
+  },
+];
 
-function Nav() {
+function Header({ tab, setTab }) {
   return (
-    <nav className="nav">
-      <div className="nav-inner container">
-        <Link className="nav-name" to="/">Will Nzeuton</Link>
-        <div className="nav-links">
-          <button className="nav-btn" onClick={() => scrollTo('work')}>Work</button>
-          <button className="nav-btn" onClick={() => scrollTo('about')}>About</button>
-          <button className="nav-btn" onClick={() => scrollTo('contact')}>Contact</button>
-        </div>
-      </div>
-    </nav>
+    <header className="site-header container">
+      <p className="header-eyebrow">cs @ cornell, class of 2028 · based in nyc</p>
+      <h1 className="header-name">will nzeuton</h1>
+      <nav className="tabs">
+        {['work', 'about', 'notes', 'contact'].map(t => (
+          <button
+            key={t}
+            className={`tab-btn${tab === t ? ' active' : ''}`}
+            onClick={() => setTab(t)}
+          >{t}</button>
+        ))}
+      </nav>
+    </header>
   );
 }
 
-function Hero() {
+function WorkTab() {
   return (
-    <section className="hero container" id="about">
-      <div className="hero-inner">
-        <div className="hero-text">
-          <p className="eyebrow">CS @ Cornell, Class of 2028 · Based in NYC</p>
-          <h1 className="headline">
-            I build <RotatingWord /><br />
-            that solve real problems.
-          </h1>
-          <p className="subtext">
-            I care about code that ships and impact that scales. Currently exploring ML systems,
-            applied AI, and building things that matter.
-          </p>
-          <div className="badges">
-            <a className="badge badge-link" href="https://www.congressionalappchallenge.us/23-NY12/" target="_blank" rel="noreferrer">Congressional App Challenge Winner <span className="badge-arrow">↗</span></a>
-            <a className="badge badge-link" href="https://10under20foodheroes.com/our-food-heroes/2024-food-heroes/" target="_blank" rel="noreferrer">Hormel Foods 10 Under 20 Food Hero <span className="badge-arrow">↗</span></a>
-            <span className="badge">Calvin Martin Memorial Scholar</span>
-          </div>
-        </div>
-        <div className="hero-photo">
-          <img src={process.env.PUBLIC_URL + '/headshot.jpg'} alt="Will Nzeuton" className="headshot" />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Projects() {
-  return (
-    <section className="projects container">
-      <p className="section-label">Featured Projects</p>
+    <div className="tab-content container">
       <div className="projects-grid">
         {PROJECTS.map(p => (
           <div key={p.id} className={`card${p.featured ? ' featured' : ''}`}>
-            <p className="card-tag">{p.tag}</p>
+            <span className="card-tag">{p.tag}</span>
             <h3 className="card-title">{p.title}</h3>
             <p className="card-desc">{p.desc}</p>
             <div className="stack">
-              {p.stack.map(s => <span key={s} className="pill">{s}</span>)}
+              {p.stack.map(s => <span key={s} className="pill">{s.toLowerCase()}</span>)}
             </div>
             <div className="card-actions">
               {p.github && (
-                <a className="card-action-link" href={p.github} target="_blank" rel="noreferrer" aria-label="GitHub">
-                  <GitHubIcon />
+                <a href={p.github} target="_blank" rel="noreferrer" className="card-link">
+                  <GitHubIcon /> github
                 </a>
               )}
-              {p.featured && <span className="card-in-progress">In Progress</span>}
+              {p.featured && <span className="card-wip">in progress</span>}
             </div>
           </div>
         ))}
       </div>
-    </section>
+
+      <div className="exp-section">
+        <div className="exp-label-row">
+          <p className="exp-label">experience</p>
+          <a className="resume-link" href={process.env.PUBLIC_URL + '/resume.pdf'} download>download résumé ↓</a>
+        </div>
+        {EXPERIENCE.map(e => (
+          <div key={e.org} className="exp-row">
+            <div className="exp-row-top">
+              <span className="exp-org">{e.org}</span>
+              <span className="exp-date">{e.date}</span>
+            </div>
+            <p className="exp-role">{e.role}</p>
+            <p className="exp-desc">{e.desc}</p>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
-function FoodForAll() {
+function AboutTab() {
   return (
-    <section className="ffa container">
-      <div className="ffa-inner">
+    <div className="tab-content container">
+      <p className="about-bio">
+        i care about code that ships and impact that scales.<br />
+        currently exploring ml systems, applied ai, and building things that matter.
+      </p>
+
+      <div className="about-grid">
         <div>
-          <p className="section-label">Community</p>
-          <h2 className="ffa-title">Food for All NYC</h2>
-          <p className="ffa-role">Founder and CTO</p>
-          <p className="ffa-desc">
-            I started Food for All NYC at 14 after watching my cafeteria throw away hundreds of
-            meals every day. What began as a school project became a citywide nonprofit and
-            eventually, a policy change. I worked directly with New York City officials to pass
-            legislation enabling schools across the city to rescue surplus food instead of
-            discarding it. That policy is still in effect.
-          </p>
-          <a className="ffa-link" href="https://foodforallnyc.org" target="_blank" rel="noreferrer">
-            foodforallnyc.org →
-          </a>
+          <p className="about-sub">education</p>
+          <p className="about-line">cornell university — b.s. computer science, exp. may 2028</p>
+          <p className="about-line">stuyvesant high school — graduated june 2025</p>
         </div>
-        <div className="metrics">
-          <div className="metric-card">
-            <p className="metric-value">10,000+</p>
-            <p className="metric-label">pounds of food rescued</p>
-          </div>
-          <div className="metric-card">
-            <p className="metric-value">8,300</p>
-            <p className="metric-label">meals delivered to families</p>
-          </div>
-          <div className="metric-card">
-            <p className="metric-value">$20k+</p>
-            <p className="metric-label">in donations raised</p>
-          </div>
-          <p className="ffa-press">Featured on the Drew Barrymore Show · Supported by Conagra and Hormel Foods</p>
+        <div>
+          <p className="about-sub">recognition</p>
+          <a className="about-line about-award" href="https://www.congressionalappchallenge.us/23-NY12/" target="_blank" rel="noreferrer">congressional app challenge winner ↗</a>
+          <a className="about-line about-award" href="https://10under20foodheroes.com/our-food-heroes/2024-food-heroes/" target="_blank" rel="noreferrer">hormel 10 under 20 food hero ↗</a>
+          <span className="about-line">calvin martin memorial scholar</span>
         </div>
       </div>
-    </section>
+
+      <div className="community">
+        <p className="about-sub">community</p>
+        <div className="community-inner">
+          <div>
+            <p className="community-org">food for all nyc</p>
+            <p className="community-role">founder & cto · sep 2021 – present</p>
+            <p className="community-desc">
+              started at 14 after watching my cafeteria throw away hundreds of meals every day.
+              what began as a school project became a citywide nonprofit and eventually, a policy change.
+              i worked directly with new york city officials to pass legislation enabling schools across
+              the city to rescue surplus food instead of discarding it. that policy is still in effect.
+            </p>
+            <a href="https://foodforallnyc.org" target="_blank" rel="noreferrer" className="community-link">
+              foodforallnyc.org →
+            </a>
+            <p className="community-press">featured on the drew barrymore show · supported by conagra and hormel foods</p>
+          </div>
+          <div className="community-metrics">
+            <div className="community-metric">
+              <span className="metric-val">10,000+</span>
+              <span className="metric-label">lbs of food rescued</span>
+            </div>
+            <div className="community-metric">
+              <span className="metric-val">8,300</span>
+              <span className="metric-label">meals delivered to families</span>
+            </div>
+            <div className="community-metric">
+              <span className="metric-val">$20k+</span>
+              <span className="metric-label">in donations raised</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
-const EXPERIENCE = [
+const NOTES = [
   {
-    role: 'Software Engineer Intern',
-    org: 'ASCEND @ LinkedIn',
-    date: 'Oct 2025 – Present · Ithaca, NY',
-    desc: 'Building an AI-powered voice-to-calendar Next.js app to create calendar events through natural voice input. Engineering a pipeline using Whisper for transcription and Llama 3.2 for intent parsing and automated scheduling. Applying 4-bit quantization to Llama 3.2 to significantly reduce latency for real-time voice scheduling.',
+    id: 1,
+    date: 'may 23, 4:02 am',
+    type: 'short',
+    content: "// have to be interestingly disciplined in order to learn an unfamiliar tech stack when claude code is so proficient. letting go of shipping speed in order to understand everything for my own sake is wearing me down.",
   },
   {
-    role: 'Developer',
-    org: 'Cornell Hack4Impact',
-    date: 'Aug 2025 – Present · Ithaca, NY',
-    desc: 'Working in a team of 8 to build a cross-chapter member portal in React, Express.js, and Supabase. Enabling 800+ volunteers across 13 chapters to connect with alumni and track past and present projects.',
+    id: 2,
+    date: 'may 22, 2:05 am',
+    type: 'long',
+    title: 'balancing design for learning vs outcome',
+    preview: "been workshopping the design of a summer project. part of my goal is to fill in some gaps of what i don't think i've done enough work in, but i'm coming to realize that what i want to learn doesn't always fit what is actually technically best for the project. it's not really possible to come up with the perfect project where every single thing i want to improve on is optimal technically speaking, so i'm leaning towards sacrificing particular technical optimization for general personal technical growth — especially since that was the original goal of the project to begin with.",
   },
   {
-    role: 'Founder & CTO',
-    org: 'Food for All NYC',
-    date: 'Sep 2021 – Present · New York, NY',
-    desc: 'Directing food rescue initiatives that have donated over 10,000 lbs of food (~8,300 meals). Collaborated with city officials to enact policy changes enabling schools city-wide to save surplus food. Secured $20,000+ in donations from the Drew Barrymore Show, Conagra, and Hormel Foods.',
-  },
-  {
-    role: 'President',
-    org: 'StuyAI Club',
-    date: 'May 2024 – Jun 2025 · New York, NY',
-    desc: 'Developed a ~30-lesson AI curriculum on NLP, deep learning, and reinforcement learning for 100+ students. Built a PyTorch-based club recommendation system used by 3,000+ peers, and designed a Python web-scraping pipeline to collect and structure student interest data.',
+    id: 3,
+    date: 'may 12, 11:53 pm',
+    type: 'short',
+    content: '// noticed claude keeps telling me to go to sleep when it thinks i\'m overthinking or acting anxious. kinda weird but it\'s usually right.',
   },
 ];
 
-function Experience() {
+function NotesTab() {
   return (
-    <section className="experience container" id="work">
-      <div className="exp-grid">
-        <div>
-          <p className="section-label">Experience</p>
-          <div className="exp-list">
-            {EXPERIENCE.map(e => (
-              <div key={e.role + e.org} className="exp-item">
-                <div className="exp-item-top">
-                  <div>
-                    <p className="exp-org">{e.org}</p>
-                    <p className="exp-role">{e.role}</p>
-                  </div>
-                  <p className="exp-date">{e.date}</p>
-                </div>
-                <p className="exp-desc">{e.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="exp-sidebar">
-          <div className="sidebar-block">
-            <p className="section-label">Education</p>
-            <p className="sidebar-school">Cornell University</p>
-            <p className="sidebar-detail">B.S. Computer Science</p>
-            <p className="sidebar-detail muted">Expected May 2028</p>
-            <p className="sidebar-school" style={{ marginTop: '1.25rem' }}>Stuyvesant High School</p>
-            <p className="sidebar-detail muted">Graduated June 2025, GPA 4.0</p>
-          </div>
-
-          <div className="sidebar-block">
-            <p className="section-label">Skills</p>
-            <div className="skills-grid">
-              {['Python','Java','PyTorch','TensorFlow','Hugging Face','React','Next.js','Node.js','Express.js','Supabase','SQL','Linux'].map(s => (
-                <span key={s} className="pill">{s}</span>
-              ))}
-            </div>
-            <a className="btn btn-outline" href={process.env.PUBLIC_URL + '/resume.pdf'} download style={{ marginTop: '1.25rem', display: 'inline-block' }}>
-              Download Resume
-            </a>
-          </div>
-        </div>
+    <div className="tab-content container">
+      <div className="notes-header">
+        <p className="notes-subtitle">rough thoughts. updated whenever something's worth writing down.</p>
       </div>
-    </section>
+      <div className="notes-list">
+        {NOTES.map(note => (
+          <div key={note.id} className="note-entry">
+            <p className="note-date">{note.date}</p>
+            {note.type === 'short' ? (
+              <p className="note-short">{note.content}</p>
+            ) : (
+              <>
+                <p className="note-title">{note.title}</p>
+                <p className="note-preview">{note.preview}</p>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
-function Footer() {
+function ContactTab() {
   return (
-    <footer className="footer" id="contact">
-      <div className="footer-inner container">
-        <p className="footer-cta">Let&apos;s work together.</p>
-        <div className="footer-right">
-          <div className="footer-links">
-            <a href="https://github.com/wnzeuton" target="_blank" rel="noreferrer">GitHub</a>
-            <a href="https://linkedin.com/in/will-nzeuton" target="_blank" rel="noreferrer">LinkedIn</a>
-          </div>
-          <a className="btn" href="mailto:will.nzeuton@gmail.com">
-            will.nzeuton@gmail.com
-          </a>
-        </div>
+    <div className="tab-content container">
+      <div className="contact-row">
+        <a href="mailto:will.nzeuton@gmail.com" className="contact-link">will.nzeuton@gmail.com</a>
+        <a href="https://linkedin.com/in/will-nzeuton" target="_blank" rel="noreferrer" className="contact-link">linkedin ↗</a>
+        <a href="https://github.com/wnzeuton" target="_blank" rel="noreferrer" className="contact-link">github ↗</a>
+        <span className="status-dot">available for work</span>
       </div>
-    </footer>
+    </div>
   );
 }
 
 function Portfolio() {
+  const [tab, setTab] = useState('work');
   return (
     <>
-      <Nav />
-      <Hero />
-      <Projects />
-      <FoodForAll />
-      <Experience />
-      <Footer />
+      <Header tab={tab} setTab={setTab} />
+      {tab === 'work'    && <WorkTab />}
+      {tab === 'about'   && <AboutTab />}
+      {tab === 'notes'   && <NotesTab />}
+      {tab === 'contact' && <ContactTab />}
     </>
+  );
+}
+
+function ProjectNav() {
+  return (
+    <header className="site-header container">
+      <p className="header-eyebrow">cs @ cornell, class of 2028 · based in nyc</p>
+      <h1 className="header-name"><Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>will nzeuton</Link></h1>
+    </header>
   );
 }
 
@@ -332,10 +338,10 @@ function ProjectPage() {
   if (!project) {
     return (
       <>
-        <Nav />
-        <div className="container" style={{ padding: '5rem 2rem' }}>
-          <p>Project not found.</p>
-          <Link to="/" className="teal-link" style={{ fontSize: '0.9rem', fontWeight: 600 }}>← Back</Link>
+        <ProjectNav />
+        <div className="tab-content container">
+          <p style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>project not found.</p>
+          <Link to="/" style={{ color: 'var(--accent)', fontSize: '0.875rem', textDecoration: 'none' }}>← back</Link>
         </div>
       </>
     );
@@ -343,25 +349,23 @@ function ProjectPage() {
 
   return (
     <>
-      <Nav />
+      <ProjectNav />
       <article className="project-page container">
-        <Link to="/" className="project-back">← Back</Link>
-        <p className="card-tag" style={{ marginBottom: '0.75rem' }}>{project.tag}</p>
+        <Link to="/" className="project-back">← back</Link>
+        <span className="card-tag" style={{ marginBottom: '0.75rem', display: 'inline-block' }}>{project.tag}</span>
         <h1 className="project-page-title">{project.title}</h1>
-        <div className="stack" style={{ marginBottom: '3rem' }}>
-          {project.stack.map(s => <span key={s} className="pill">{s}</span>)}
+        <div className="stack" style={{ marginBottom: '2.5rem' }}>
+          {project.stack.map(s => <span key={s} className="pill">{s.toLowerCase()}</span>)}
         </div>
-
         {project.detail.map(section => (
           <div key={section.heading} className="project-section">
             <h2 className="project-section-heading">{section.heading}</h2>
             <p className="project-section-body">{section.body}</p>
           </div>
         ))}
-
         {project.github && (
           <a className="btn" href={project.github} target="_blank" rel="noreferrer" style={{ marginTop: '1rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-            <GitHubIcon /> View on GitHub
+            <GitHubIcon /> view on github
           </a>
         )}
       </article>

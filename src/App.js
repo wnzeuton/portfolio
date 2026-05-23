@@ -215,7 +215,8 @@ function AboutTab() {
     <div className="tab-content container">
       <p className="about-bio">
         i care about code that ships and impact that scales.<br />
-        currently exploring ml systems, applied ai, and building things that matter.
+        currently exploring ml systems, applied ai, and building things that matter.<br />
+        213 wpm.
       </p>
 
       <div className="about-grid">

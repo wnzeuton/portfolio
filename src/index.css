@@ -4,5 +4,5 @@ body {
   font-family: ui-monospace, 'SF Mono', 'Fira Code', monospace;
   -webkit-font-smoothing: antialiased;
   background: var(--bg, #0d0d0d);
-  color: #f0f0f0;
+  color: var(--text, #f0f0f0);
 }

@@ -228,6 +228,30 @@ function GitHubIcon() {
   );
 }
 
+function SunIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="5" />
+      <line x1="12" y1="1" x2="12" y2="3" />
+      <line x1="12" y1="21" x2="12" y2="23" />
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+      <line x1="1" y1="12" x2="3" y2="12" />
+      <line x1="21" y1="12" x2="23" y2="12" />
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </svg>
+  );
+}
+
 const PROJECTS = [
   {
     id: 'booking-intake-agent',
@@ -369,7 +393,7 @@ const ALSO_WORKED_WITH = [
   'numpy', 'pandas', 'jupyter',
 ];
 
-function Header({ tab, setTab, theme, setTheme }) {
+function Header({ tab, setTab, theme, setTheme, mode, setMode }) {
   return (
     <header className="site-header container">
       <p className="header-eyebrow">cs @ cornell, class of 2028 · based in nyc</p>
@@ -382,16 +406,25 @@ function Header({ tab, setTab, theme, setTheme }) {
             onClick={() => setTab(t)}
           >{t}</button>
         ))}
-        <span className="theme-dots">
-          {THEMES.map(t => (
-            <button
-              key={t.id}
-              className={`theme-dot${theme === t.id ? ' active' : ''}`}
-              style={{ background: t.dot }}
-              onClick={() => setTheme(t.id)}
-              title={t.id}
-            />
-          ))}
+        <span className="theme-controls">
+          <button
+            className="mode-toggle"
+            onClick={() => setMode(m => m === 'dark' ? 'light' : 'dark')}
+            title={mode === 'dark' ? 'switch to light mode' : 'switch to dark mode'}
+          >
+            {mode === 'dark' ? <SunIcon /> : <MoonIcon />}
+          </button>
+          <span className="theme-dots">
+            {THEMES.map(t => (
+              <button
+                key={t.id}
+                className={`theme-dot${theme === t.id ? ' active' : ''}`}
+                style={{ background: t.dot }}
+                onClick={() => setTheme(t.id)}
+                title={t.id}
+              />
+            ))}
+          </span>
         </span>
       </nav>
     </header>
@@ -621,12 +654,19 @@ function Footer() {
 function Portfolio() {
   const [tab, setTab] = useState('work');
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'default');
+  const [mode, setMode] = useState(() => localStorage.getItem('mode') || 'dark');
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-mode', mode);
+    localStorage.setItem('mode', mode);
+  }, [mode]);
 
   useEffect(() => {
     const t = THEMES.find(t => t.id === theme);
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect x="2" y="2" width="28" height="28" fill="#000000" stroke="${t.dot}" stroke-width="2"/></svg>`;
+    const fillColor = mode === 'light' ? '#ffffff' : '#000000';
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect x="2" y="2" width="28" height="28" fill="${fillColor}" stroke="${t.dot}" stroke-width="2"/></svg>`;
     const blob = new Blob([svg], { type: 'image/svg+xml' });
     const url = URL.createObjectURL(blob);
     const link = document.querySelector("link[rel='icon']") || document.createElement('link');
@@ -634,11 +674,11 @@ function Portfolio() {
     link.type = 'image/svg+xml';
     link.href = url;
     if (!link.parentNode) document.head.appendChild(link);
-  }, [theme]);
+  }, [theme, mode]);
 
   return (
     <>
-      <Header tab={tab} setTab={setTab} theme={theme} setTheme={setTheme} />
+      <Header tab={tab} setTab={setTab} theme={theme} setTheme={setTheme} mode={mode} setMode={setMode} />
       {tab === 'work'    && <WorkTab />}
       {tab === 'about'   && <AboutTab />}
       {tab === 'notes'   && <NotesTab />}
@@ -664,8 +704,10 @@ function ProjectPage() {
   const project = PROJECTS.find(p => p.id === id);
 
   useEffect(() => {
-    const saved = localStorage.getItem('theme') || 'default';
-    document.documentElement.setAttribute('data-theme', saved);
+    const savedTheme = localStorage.getItem('theme') || 'default';
+    const savedMode = localStorage.getItem('mode') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    document.documentElement.setAttribute('data-mode', savedMode);
     window.scrollTo(0, 0);
   }, []);
 

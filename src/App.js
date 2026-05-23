@@ -1,6 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, Link, useParams } from 'react-router-dom';
 import './App.css';
+
+const THEMES = [
+  { id: 'default',  dot: '#7f77dd' },
+  { id: 'midnight', dot: '#4d9de0' },
+  { id: 'forest',   dot: '#2ec090' },
+  { id: 'ember',    dot: '#e8923a' },
+  { id: 'rose',     dot: '#d96b6b' },
+  { id: 'mono',     dot: '#888888' },
+];
 
 function GitHubIcon() {
   return (
@@ -106,7 +115,7 @@ const EXPERIENCE = [
     org: 'ascend @ linkedin',
     role: 'software engineer intern',
     date: 'oct 2025 – present',
-    desc: 'ai voice-to-calendar app using whisper + llama 3.2 with 4-bit quantization for real-time scheduling.',
+    desc: '',
   },
   {
     org: 'cornell hack4impact',
@@ -128,11 +137,11 @@ const EXPERIENCE = [
   },
 ];
 
-function Header({ tab, setTab }) {
+function Header({ tab, setTab, theme, setTheme }) {
   return (
     <header className="site-header container">
       <p className="header-eyebrow">cs @ cornell, class of 2028 · based in nyc</p>
-      <h1 className="header-name">will nzeuton</h1>
+      <h1 className="header-name">will nzeuton <span className="name-phonetic">/ wil·zoo·ton /</span></h1>
       <nav className="tabs">
         {['work', 'about', 'notes', 'contact'].map(t => (
           <button
@@ -141,6 +150,17 @@ function Header({ tab, setTab }) {
             onClick={() => setTab(t)}
           >{t}</button>
         ))}
+        <span className="theme-dots">
+          {THEMES.map(t => (
+            <button
+              key={t.id}
+              className={`theme-dot${theme === t.id ? ' active' : ''}`}
+              style={{ background: t.dot }}
+              onClick={() => setTheme(t.id)}
+              title={t.id}
+            />
+          ))}
+        </span>
       </nav>
     </header>
   );
@@ -182,7 +202,7 @@ function WorkTab() {
               <span className="exp-date">{e.date}</span>
             </div>
             <p className="exp-role">{e.role}</p>
-            <p className="exp-desc">{e.desc}</p>
+            {e.desc && <p className="exp-desc">{e.desc}</p>}
           </div>
         ))}
       </div>
@@ -251,6 +271,12 @@ function AboutTab() {
 
 const NOTES = [
   {
+    id: 0,
+    date: 'may 23, 2026',
+    type: 'short',
+    content: '// i wish my github contributions heatmap was all green.',
+  },
+  {
     id: 1,
     date: 'may 23, 4:02 am',
     type: 'short',
@@ -309,15 +335,39 @@ function ContactTab() {
   );
 }
 
+function Footer() {
+  return (
+    <footer className="site-footer container">
+      <p className="footer-updated">last updated may 23, 2026</p>
+    </footer>
+  );
+}
+
 function Portfolio() {
   const [tab, setTab] = useState('work');
+  const [theme, setTheme] = useState('default');
+
+  useEffect(() => {
+    const t = THEMES.find(t => t.id === theme);
+    document.documentElement.setAttribute('data-theme', theme);
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect x="2" y="2" width="28" height="28" fill="#000000" stroke="${t.dot}" stroke-width="2"/></svg>`;
+    const blob = new Blob([svg], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const link = document.querySelector("link[rel='icon']") || document.createElement('link');
+    link.rel = 'icon';
+    link.type = 'image/svg+xml';
+    link.href = url;
+    if (!link.parentNode) document.head.appendChild(link);
+  }, [theme]);
+
   return (
     <>
-      <Header tab={tab} setTab={setTab} />
+      <Header tab={tab} setTab={setTab} theme={theme} setTheme={setTheme} />
       {tab === 'work'    && <WorkTab />}
       {tab === 'about'   && <AboutTab />}
       {tab === 'notes'   && <NotesTab />}
       {tab === 'contact' && <ContactTab />}
+      <Footer />
     </>
   );
 }

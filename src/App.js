@@ -351,7 +351,7 @@ const EXPERIENCE = [
   {
     org: 'ascend capital group',
     role: 'ai engineer intern',
-    date: 'may 2026 – aug 2026',
+    date: 'may 2026 – present',
     desc: '',
     skills: ['python', 'fastapi', 'postgresql', 'langchain', 'aws', 'docker', 'github', 'github actions', 'ci/cd', 'agent design', 'agentic workflow', 'llm', 'prompt engineering', 'tool use', 'cloud deployment', 'ai engineering', 'webhook', 'rest api', 'full stack', 'communication', 'fast typer'],
     link: { label: 'booking intake agent', href: '#/projects/booking-intake-agent' },
@@ -359,7 +359,7 @@ const EXPERIENCE = [
   {
     org: 'ascend @ linkedin',
     role: 'software engineer intern',
-    date: 'oct 2025 – may 2026',
+    date: 'oct 2025 – present',
     desc: 'built real-time pii detection (presidio + claude api), prompt-level risk event logging with fastapi and postgres, and a role-based classifier for enterprise ai.',
     skills: ['python', 'fastapi', 'postgresql', 'presidio', 'claude api', 'pii detection', 'risk classification', 'enterprise ai', 'security', 'ai engineering', 'rest api', 'sql', 'machine learning', 'data analysis', 'privacy', 'llm', 'communication', 'github', 'fast typer'],
   },

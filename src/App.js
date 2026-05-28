@@ -288,7 +288,7 @@ function SectionRow({ en }) {
   );
 }
 
-function ExpandedProject({ project, originRect, onClose }) {
+function ExpandedProject({ project, originRect, onClose, onAnimationEnd, fillHeight }) {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -302,13 +302,15 @@ function ExpandedProject({ project, originRect, onClose }) {
     el.style.transition = "none";
     el.style.transform = `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`;
     requestAnimationFrame(() => requestAnimationFrame(() => {
-      el.style.transition = "transform 0.42s cubic-bezier(0.16, 1, 0.3, 1)";
+      el.style.transition = "transform 0.65s cubic-bezier(0.16, 1, 0.3, 1)";
       el.style.transform = "none";
+      const onEnd = () => { onAnimationEnd?.(); el.removeEventListener('transitionend', onEnd); };
+      el.addEventListener('transitionend', onEnd);
     }));
   }, [originRect]);
 
   return (
-    <div ref={ref} className="pf-project-expanded">
+    <div ref={ref} className="pf-project-expanded" style={fillHeight ? { height: "100%", marginBottom: 0, overflowY: originRect ? "hidden" : "auto", boxSizing: "border-box" } : {}}>
       <div className="pf-pmeta" style={{ marginBottom: "0.4rem" }}>
         <span className="pf-porg">{project.org}</span>
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
@@ -421,13 +423,47 @@ function useLatestCommit() {
   return data;
 }
 
+const ProjectCard = ({ p, q, match, onClick }) => (
+  <div key={p.id} className={`pf-project${q && !match(p) ? " faded" : ""}`} onClick={onClick}>
+    <div className="pf-pmeta">
+      <span className="pf-porg">{p.org}</span>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+        {p.github && <a href={p.github} className="pf-gh" target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}>github ↗</a>}
+        <span className="pf-pdate">{p.date}</span>
+      </div>
+    </div>
+    <h2 className="pf-ptitle">{p.title}</h2>
+    <p className="pf-pdesc">{p.desc}</p>
+    <div className="pf-pfoot">
+      <div className="pf-stack">{p.stack.map(s => <span key={s} className="pf-pill">{s}</span>)}</div>
+      {p.wip && <div className="pf-wip" style={{ marginTop: "6px" }}><div className="pf-wip-dot" /><span className="pf-wip-txt">in progress</span></div>}
+    </div>
+  </div>
+);
+
 function WorkTab() {
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState(null);
   const [originRect, setOriginRect] = useState(null);
+  const [phase, setPhase] = useState("grid"); // "grid" | "expanding" | "expanded"
+  const [gridHeight, setGridHeight] = useState(0);
+  const gridWrapRef = useRef(null);
   const q = search.toLowerCase().trim();
   const match = (p) => !q || p.title.includes(q) || p.desc.includes(q) || p.stack.some(s => s.includes(q)) || p.org.includes(q);
   const matchExp = (e) => !q || e.org.includes(q) || e.role.includes(q) || e.desc.includes(q);
+
+  const handleCardClick = (id, e) => {
+    setGridHeight(gridWrapRef.current.offsetHeight);
+    setOriginRect(e.currentTarget.getBoundingClientRect());
+    setExpandedId(id);
+    setPhase("expanding");
+  };
+
+  const handleClose = () => {
+    setExpandedId(null);
+    setOriginRect(null);
+    setPhase("grid");
+  };
 
   return (
     <div>
@@ -436,33 +472,28 @@ function WorkTab() {
         <input className="pf-search" placeholder="try python, leadership, rag, fast typer..." value={search} onChange={e => setSearch(e.target.value)} />
       </div>
       <SectionRow en="projects" />
-      {expandedId ? (
-        <ExpandedProject
-          project={PROJECTS.find(p => p.id === expandedId)}
-          originRect={originRect}
-          onClose={() => { setExpandedId(null); setOriginRect(null); }}
-        />
-      ) : (
-        <div className="pf-projects-grid">
+
+      <div ref={gridWrapRef} style={{ position: "relative" }}>
+        <div className="pf-projects-grid" style={{
+          visibility: phase !== "grid" ? "hidden" : "visible",
+          pointerEvents: phase !== "grid" ? "none" : "auto",
+        }}>
           {PROJECTS.map(p => (
-            <div key={p.id} className={`pf-project${q && !match(p) ? " faded" : ""}`} onClick={e => { setOriginRect(e.currentTarget.getBoundingClientRect()); setExpandedId(p.id); }}>
-              <div className="pf-pmeta">
-                <span className="pf-porg">{p.org}</span>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                  {p.github && <a href={p.github} className="pf-gh" target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}>github ↗</a>}
-                  <span className="pf-pdate">{p.date}</span>
-                </div>
-              </div>
-              <h2 className="pf-ptitle">{p.title}</h2>
-              <p className="pf-pdesc">{p.desc}</p>
-              <div className="pf-pfoot">
-                <div className="pf-stack">{p.stack.map(s => <span key={s} className="pf-pill">{s}</span>)}</div>
-                {p.wip && <div className="pf-wip" style={{ marginTop: "6px" }}><div className="pf-wip-dot" /><span className="pf-wip-txt">in progress</span></div>}
-              </div>
-            </div>
+            <ProjectCard key={p.id} p={p} q={q} match={match} onClick={e => handleCardClick(p.id, e)} />
           ))}
         </div>
-      )}
+        {phase !== "grid" && (
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: gridHeight, zIndex: 5 }}>
+            <ExpandedProject
+              project={PROJECTS.find(p => p.id === expandedId)}
+              originRect={phase === "expanding" ? originRect : null}
+              onClose={handleClose}
+              onAnimationEnd={() => setPhase("expanded")}
+              fillHeight
+            />
+          </div>
+        )}
+      </div>
       <SectionRow en="experience" />
       {EXPERIENCE.map(e => (
         <div key={e.org} className={`pf-exp-row${q && !matchExp(e) ? " faded" : ""}`}>

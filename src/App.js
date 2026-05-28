@@ -356,7 +356,6 @@ function WeekHeatmap({ data }) {
     <div className="pf-heatmap">
       <div className="pf-heatmap-top">
         <span className="pf-heatmap-lbl">commits this week</span>
-        <span className="pf-heatmap-total">{data.total}</span>
       </div>
       <div className="pf-heatmap-cells">
         {data.days.map(d => (

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
 
 const GOLD_DIM = "#a8824a";
 
@@ -288,10 +288,10 @@ function SectionRow({ en }) {
   );
 }
 
-function ExpandedProject({ project, originRect, onClose, onAnimationEnd, fillHeight }) {
+function ExpandedProject({ project, originRect, onClose, onAnimationEnd }) {
   const ref = useRef(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = ref.current;
     if (!el || !originRect) return;
     const target = el.getBoundingClientRect();
@@ -301,32 +301,33 @@ function ExpandedProject({ project, originRect, onClose, onAnimationEnd, fillHei
     const sy = originRect.height / target.height;
     el.style.transition = "none";
     el.style.transform = `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`;
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      el.style.transition = "transform 0.65s cubic-bezier(0.16, 1, 0.3, 1)";
-      el.style.transform = "none";
-      const onEnd = () => { onAnimationEnd?.(); el.removeEventListener('transitionend', onEnd); };
-      el.addEventListener('transitionend', onEnd);
-    }));
+    void el.offsetWidth; // force reflow so browser commits the start state
+    el.style.transition = "transform 1.4s cubic-bezier(0.16, 1, 0.3, 1)";
+    el.style.transform = "none";
+    const onEnd = () => { onAnimationEnd?.(); el.removeEventListener('transitionend', onEnd); };
+    el.addEventListener('transitionend', onEnd);
   }, [originRect]);
 
   return (
-    <div ref={ref} className="pf-project-expanded" style={fillHeight ? { height: "100%", marginBottom: 0, overflowY: originRect ? "hidden" : "auto", boxSizing: "border-box" } : {}}>
-      <div className="pf-pmeta" style={{ marginBottom: "0.4rem" }}>
-        <span className="pf-porg">{project.org}</span>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-          {project.github && <a href={project.github} className="pf-gh" target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}>github ↗</a>}
-          <span className="pf-pdate">{project.date}</span>
+    <div ref={ref} className="pf-project-expanded">
+      <div style={{ opacity: originRect ? 0 : 1, transition: "opacity 0.4s ease 0.15s" }}>
+        <div className="pf-pmeta" style={{ marginBottom: "0.4rem" }}>
+          <span className="pf-porg">{project.org}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+            {project.github && <a href={project.github} className="pf-gh" target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}>github ↗</a>}
+            <span className="pf-pdate">{project.date}</span>
+          </div>
         </div>
-      </div>
-      <h2 className="pf-ptitle" style={{ fontSize: "28px", marginBottom: "1.25rem" }}>{project.title}</h2>
-      <p className="pf-pdesc" style={{ maxWidth: "600px", marginBottom: 0 }}>{project.desc}</p>
-      {project.detail && <p className="pf-pdetail">{project.detail}</p>}
-      <div style={{ marginTop: "2rem", display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "8px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
-          <div className="pf-stack">{project.stack.map(s => <span key={s} className="pf-pill">{s}</span>)}</div>
-          {project.wip && <div className="pf-wip"><div className="pf-wip-dot" /><span className="pf-wip-txt">in progress</span></div>}
+        <h2 className="pf-ptitle" style={{ fontSize: "28px", marginBottom: "1.25rem" }}>{project.title}</h2>
+        <p className="pf-pdesc" style={{ maxWidth: "600px", marginBottom: 0 }}>{project.desc}</p>
+        {project.detail && <p className="pf-pdetail">{project.detail}</p>}
+        <div style={{ marginTop: "2rem", display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "8px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+            <div className="pf-stack">{project.stack.map(s => <span key={s} className="pf-pill">{s}</span>)}</div>
+            {project.wip && <div className="pf-wip"><div className="pf-wip-dot" /><span className="pf-wip-txt">in progress</span></div>}
+          </div>
+          <button className="pf-back" onClick={onClose}>← projects</button>
         </div>
-        <button className="pf-back" onClick={onClose}>← projects</button>
       </div>
     </div>
   );
@@ -446,14 +447,12 @@ function WorkTab() {
   const [expandedId, setExpandedId] = useState(null);
   const [originRect, setOriginRect] = useState(null);
   const [phase, setPhase] = useState("grid"); // "grid" | "expanding" | "expanded"
-  const [gridHeight, setGridHeight] = useState(0);
   const gridWrapRef = useRef(null);
   const q = search.toLowerCase().trim();
   const match = (p) => !q || p.title.includes(q) || p.desc.includes(q) || p.stack.some(s => s.includes(q)) || p.org.includes(q);
   const matchExp = (e) => !q || e.org.includes(q) || e.role.includes(q) || e.desc.includes(q);
 
   const handleCardClick = (id, e) => {
-    setGridHeight(gridWrapRef.current.offsetHeight);
     setOriginRect(e.currentTarget.getBoundingClientRect());
     setExpandedId(id);
     setPhase("expanding");
@@ -483,13 +482,12 @@ function WorkTab() {
           ))}
         </div>
         {phase !== "grid" && (
-          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: gridHeight, zIndex: 5 }}>
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 5 }}>
             <ExpandedProject
               project={PROJECTS.find(p => p.id === expandedId)}
               originRect={phase === "expanding" ? originRect : null}
               onClose={handleClose}
               onAnimationEnd={() => setPhase("expanded")}
-              fillHeight
             />
           </div>
         )}

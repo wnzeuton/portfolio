@@ -281,8 +281,8 @@ const EXPERIENCE = [
   { org: "walter's pet styles", role: "ai engineer · contractor", date: "may 2026 – present", desc: "automated booking intake with langchain agent, fastapi, aws ec2, and ci/cd. reduced processing time by 95%." },
   { org: "ascend @ linkedin", role: "software engineer intern", date: "oct 2025 – present", desc: "real-time pii detection pipeline, prompt-level risk logging, role-based classifier for enterprise ai." },
   { org: "cornell hack4impact", role: "developer", date: "aug 2025 – present", desc: "member portal connecting 800+ volunteers across 13 chapters.", website: "https://www.cornellh4i.org/" },
-  { org: "food for all nyc", role: "founder & cto", date: "sep 2021 – present", desc: "10,000+ lbs rescued. $20k raised. co-authored nyc school food rescue legislation.", website: "https://foodforallnyc.org" },
-  { org: "stuyai club", role: "president", date: "may 2024 – jun 2025", desc: "30-lesson ai curriculum and pytorch recommendation system used by 3,000+ peers." },
+  { org: "food for all nyc", role: "founder & cto", date: "sep 2021 – present", desc: "10,000+ lbs rescued. $20k raised. co-authored nyc school food rescue legislation.", website: "https://foodforallnyc.org", tags: ["leadership", "food security", "nonprofit"] },
+  { org: "stuyai club", role: "president", date: "may 2024 – jun 2025", desc: "30-lesson ai curriculum and pytorch recommendation system used by 3,000+ peers.", tags: ["leadership", "teaching", "education"] },
 ];
 
 const NOTES = [
@@ -450,7 +450,7 @@ function WorkTab() {
   useEffect(() => { if (gridRef.current) setGridHeight(gridRef.current.offsetHeight); }, []);
   const q = search.toLowerCase().trim();
   const match = (p) => !q || p.title.includes(q) || p.desc.includes(q) || p.stack.some(s => s.includes(q)) || p.org.includes(q);
-  const matchExp = (e) => !q || e.org.includes(q) || e.role.includes(q) || e.desc.includes(q);
+  const matchExp = (e) => !q || e.org.includes(q) || e.role.includes(q) || e.desc.includes(q) || e.tags?.some(t => t.includes(q));
 
   const handleClose = () => {
     setClosing(true);

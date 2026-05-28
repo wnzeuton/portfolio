@@ -62,6 +62,11 @@ const styles = `
 
   .pf-phonetic { font-size: 12px; font-weight: 300; color: #a08c6e; letter-spacing: 0.08em; margin-top: 0.6rem; margin-bottom: 3.75rem; animation: fadeUp 0.5s 0.35s ease-out both; }
 
+  .pf-commit { display: flex; align-items: center; gap: 7px; margin-bottom: 2.65rem; animation: fadeUp 0.5s 0.55s ease-out both; }
+  .pf-commit-txt { font-size: 12px; font-weight: 300; color: #6a5540; letter-spacing: 0.04em; }
+  .pf-commit-repo { color: #a8824a; text-decoration: none; transition: opacity 0.2s; }
+  .pf-commit-repo:hover { opacity: 0.7; }
+
   .pf-nav {
     display: flex; gap: 3.5rem; margin-bottom: 3rem;
     border-bottom: 0.5px solid #c4b49a; padding-bottom: 1.5rem; align-items: center;
@@ -321,16 +326,22 @@ function useLatestCommit() {
       .then(r => r.ok ? r.json() : null)
       .then(events => {
         if (!events) return;
-        const push = events.find(e => e.type === 'PushEvent');
+        const push = events.find(e => e.type === 'PushEvent' && e.payload?.ref !== 'refs/heads/gh-pages');
         if (!push) return;
-        const msg = push.payload.commits?.slice(-1)[0]?.message?.split('\n')[0];
-        if (!msg) return;
-        setData({
-          repo: push.repo.name.replace('wnzeuton/', ''),
-          message: msg,
-          ago: timeAgo(new Date(push.created_at)),
-          url: `https://github.com/${push.repo.name}`,
-        });
+        const repo = push.repo.name.replace('wnzeuton/', '');
+        const branch = push.payload.ref.replace('refs/heads/', '');
+        return fetch(`https://api.github.com/repos/wnzeuton/${repo}/commits?sha=${branch}&per_page=1`)
+          .then(r => r.ok ? r.json() : null)
+          .then(commits => {
+            if (!commits?.[0]) return;
+            const c = commits[0];
+            setData({
+              repo,
+              message: c.commit.message.split('\n')[0],
+              ago: timeAgo(new Date(c.commit.author.date)),
+              url: `https://github.com/wnzeuton/${repo}`,
+            });
+          });
       })
       .catch(() => {});
   }, []);
@@ -341,7 +352,6 @@ function WorkTab() {
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState(null);
   const [originRect, setOriginRect] = useState(null);
-  const commit = useLatestCommit();
   const q = search.toLowerCase().trim();
   const match = (p) => !q || p.title.includes(q) || p.desc.includes(q) || p.stack.some(s => s.includes(q)) || p.org.includes(q);
   const matchExp = (e) => !q || e.org.includes(q) || e.role.includes(q) || e.desc.includes(q);
@@ -393,14 +403,6 @@ function WorkTab() {
         <span className="pf-also-lbl">also worked with</span>
         {["java", "tensorflow", "next.js", "linux", "bash", "numpy", "pandas"].map(s => <span key={s} className="pf-pill">{s}</span>)}
       </div>
-      {commit && (
-        <div style={{ marginTop: "2rem", display: "flex", alignItems: "center", gap: "7px" }}>
-          <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#c9a96e", flexShrink: 0 }} />
-          <span style={{ fontSize: "12px", fontWeight: 300, color: "#6a5540", letterSpacing: "0.03em" }}>
-            last push · <a href={commit.url} target="_blank" rel="noreferrer" style={{ color: "#a8824a", textDecoration: "none" }}>{commit.repo}</a> · "{commit.message}" · {commit.ago}
-          </span>
-        </div>
-      )}
     </div>
   );
 }
@@ -478,6 +480,7 @@ function ContactTab() {
 
 export default function App() {
   const [tab, setTab] = useState("work");
+  const commit = useLatestCommit();
   return (
     <>
       <style>{styles}</style>
@@ -487,6 +490,14 @@ export default function App() {
           <p className="pf-eyebrow">cs @ cornell, class of 2028 · based in nyc</p>
           <h1 className="pf-name">will nzeuton</h1>
           <p className="pf-phonetic">/ wil·zoo·ton /</p>
+          {commit && (
+            <div className="pf-commit">
+              <div className="pf-wip-dot" style={{ animationDuration: "3s" }} />
+              <span className="pf-commit-txt">
+                last push · <a href={commit.url} target="_blank" rel="noreferrer" className="pf-commit-repo">{commit.repo}</a> · &ldquo;{commit.message}&rdquo; · {commit.ago}
+              </span>
+            </div>
+          )}
           <nav className="pf-nav">
             {["work", "about", "notes", "contact"].map(t => (
               <button key={t} className={`pf-nav-item${tab === t ? " active" : ""}`} onClick={() => setTab(t)}>{t}</button>

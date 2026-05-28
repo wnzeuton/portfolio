@@ -62,10 +62,11 @@ const styles = `
 
   .pf-phonetic { font-size: 12px; font-weight: 300; color: #a08c6e; letter-spacing: 0.08em; margin-top: 0.6rem; margin-bottom: 3.75rem; animation: fadeUp 0.5s 0.35s ease-out both; }
 
-  .pf-commit { display: flex; align-items: center; gap: 7px; margin-bottom: 2.65rem; animation: fadeUp 0.5s 0.55s ease-out both; }
-  .pf-commit-txt { font-size: 12px; font-weight: 300; color: #6a5540; letter-spacing: 0.04em; }
+  .pf-commit { display: flex; align-items: center; gap: 10px; margin-bottom: 2.65rem; animation: fadeUp 0.5s 0.55s ease-out both; }
+  .pf-commit-txt { font-size: 12px; font-weight: 300; color: #6a5540; letter-spacing: 0.04em; white-space: nowrap; }
   .pf-commit-repo { color: #a8824a; text-decoration: none; transition: opacity 0.2s; }
   .pf-commit-repo:hover { opacity: 0.7; }
+  .pf-commit-rule { flex: 1; height: 0.5px; background: linear-gradient(90deg, #a87828 0%, #c9a050 25%, #dbb84a 50%, #c9a050 75%, #a87828 100%); background-size: 600px 100%; animation: shimmer 9s ease-in-out infinite; opacity: 0.7; }
 
   .pf-nav {
     display: flex; gap: 3.5rem; margin-bottom: 3rem;
@@ -496,6 +497,7 @@ export default function App() {
               <span className="pf-commit-txt">
                 last push · <a href={commit.url} target="_blank" rel="noreferrer" className="pf-commit-repo">{commit.repo}</a> · &ldquo;{commit.message}&rdquo; · {commit.ago}
               </span>
+              <div className="pf-commit-rule" />
             </div>
           )}
           <nav className="pf-nav">

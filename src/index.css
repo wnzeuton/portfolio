@@ -1,9 +1,9 @@
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 html { font-size: 16px; scroll-behavior: smooth; }
 body {
-  font-family: 'Noto Sans JP', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Zen Kaku Gothic New', ui-sans-serif, system-ui, sans-serif;
   font-weight: 300;
   -webkit-font-smoothing: antialiased;
-  background: var(--bg, #0d0d0d);
-  color: var(--text, #f0f0f0);
+  background: #f5f0e8;
+  color: #1a1612;
 }

@@ -1,518 +1,362 @@
-import { useState, useEffect } from 'react';
-import { HashRouter, Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
-import './App.css';
+import { useState, useRef, useEffect } from "react";
 
-const THEMES = [
-  { id: 'gold',     dot: '#c49a2a' },
-  { id: 'default',  dot: '#7f77dd' },
-  { id: 'midnight', dot: '#4d9de0' },
-  { id: 'forest',   dot: '#2ec090' },
-  { id: 'ember',    dot: '#e8923a' },
-  { id: 'rose',     dot: '#d96b6b' },
-  { id: 'mono',     dot: '#888888' },
-];
+const GOLD_DIM = "#a8824a";
 
-const SKILL_ALIASES = {
-  // ── Frontend ──
-  'frontend':              ['react', 'streamlit', 'web development', 'javascript', 'html', 'css', 'ui', 'interface'],
-  'front end':             ['react', 'streamlit', 'web development', 'javascript', 'html', 'css', 'ui', 'interface'],
+const styles = `
+  @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500&family=Zen+Kaku+Gothic+New:wght@300;400;500&display=swap');
 
-  // ── Backend ──
-  'backend':               ['python', 'fastapi', 'postgresql', 'rest api', 'sql', 'server', 'asyncpg', 'plpgsql'],
-  'back end':              ['python', 'fastapi', 'postgresql', 'rest api', 'sql', 'server', 'asyncpg', 'plpgsql'],
-  'server':                ['python', 'fastapi', 'postgresql', 'rest api', 'asyncpg'],
-  'api':                   ['rest api', 'fastapi', 'gmail api', 'webhook', 'google cloud'],
-  'apis':                  ['rest api', 'fastapi', 'gmail api', 'webhook', 'google cloud'],
+  @keyframes shimmer {
+    0% { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+  }
 
-  // ── Full Stack ──
-  'full stack':            ['full stack'],
-  'fullstack':             ['full stack'],
+  @keyframes wipPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.15; }
+  }
 
-  // ── Databases ──
-  'database':              ['postgresql', 'sql', 'supabase', 'aws rds', 'jsonb', 'relational database', 'asyncpg', 'plpgsql'],
-  'databases':             ['postgresql', 'sql', 'supabase', 'aws rds', 'jsonb', 'relational database'],
-  'db':                    ['postgresql', 'sql', 'supabase', 'aws rds', 'jsonb'],
-  'sql':                   ['sql', 'postgresql', 'supabase', 'plpgsql', 'relational database'],
-  'postgres':              ['postgresql', 'asyncpg', 'aws rds', 'jsonb', 'plpgsql'],
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
 
-  // ── Cloud & AWS ──
-  'cloud':                 ['aws', 'aws ec2', 'aws rds', 'aws ecr', 'aws cloudwatch', 'cloud deployment'],
-  'aws':                   ['aws', 'aws ec2', 'aws rds', 'aws ecr', 'aws cloudwatch', 'aws iam', 'aws ssm', 'cloud deployment'],
-  'devops':                ['docker', 'github actions', 'ci/cd', 'aws', 'cloud deployment', 'oidc', 'containerization'],
-  'dev ops':               ['docker', 'github actions', 'ci/cd', 'aws', 'cloud deployment', 'oidc', 'containerization'],
-  'deployment':            ['cloud deployment', 'docker', 'github actions', 'aws ec2', 'ci/cd'],
-  'ci/cd':                 ['ci/cd', 'github actions', 'docker', 'cloud deployment'],
-  'ci cd':                 ['ci/cd', 'github actions', 'docker', 'cloud deployment'],
-  'containerization':      ['docker', 'docker compose', 'aws ecr'],
-  'container':             ['docker', 'docker compose', 'aws ecr'],
-  'docker':                ['docker', 'docker compose', 'aws ecr', 'containerization'],
-  'monitoring':            ['aws cloudwatch', 'logging', 'observability'],
-  'logging':               ['aws cloudwatch', 'logging', 'observability'],
-  'iam':                   ['aws iam', 'oidc', 'secrets management', 'security'],
-  'oidc':                  ['oidc', 'aws iam', 'github actions', 'secrets management'],
-  'infrastructure':        ['aws', 'aws ec2', 'aws rds', 'docker', 'github actions', 'cloud deployment'],
+  .pf-root {
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    background: #f5f0e8;
+    color: #1a1612;
+    min-height: 100vh;
+  }
 
-  // ── AI / ML ──
-  'ai':                    ['machine learning', 'nlp', 'agent design', 'ai safety', 'ai engineering', 'llm', 'pytorch', 'transformers', 'langchain'],
-  'artificial intelligence': ['machine learning', 'nlp', 'agent design', 'ai safety', 'ai engineering', 'llm'],
-  'ml':                    ['machine learning', 'pytorch', 'hugging face', 'scikit-learn', 'transformers', 'bert'],
-  'machine learning':      ['machine learning', 'pytorch', 'hugging face', 'scikit-learn', 'bert', 'transformers'],
-  'deep learning':         ['pytorch', 'bert', 'transformers', 'hugging face', 'neural network'],
-  'dl':                    ['pytorch', 'bert', 'transformers', 'hugging face', 'neural network'],
-  'neural network':        ['pytorch', 'bert', 'transformers', 'deep learning'],
-  'hugging face':          ['hugging face', 'bert', 'transformers', 'distilbart', 'sentence transformers'],
+  .pf-inner {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 4rem 1.25rem 7rem;
+  }
 
-  // ── NLP / LLMs ──
-  'nlp':                   ['nlp', 'bert', 'transformers', 'langchain', 'llm', 'text classification', 'hugging face'],
-  'natural language processing': ['nlp', 'bert', 'transformers', 'langchain', 'llm'],
-  'llm':                   ['llm', 'langchain', 'llama 3', 'bert', 'transformers', 'qwen3', 'ollama'],
-  'large language model':  ['llm', 'langchain', 'llama 3', 'bert', 'transformers', 'qwen3'],
-  'language model':        ['llm', 'langchain', 'llama 3', 'bert', 'transformers', 'qwen3'],
-  'transformer':           ['bert', 'transformers', 'hugging face', 'llm', 'nlp'],
-  'bert':                  ['bert', 'transformers', 'hugging face', 'text classification', 'nlp'],
-  'quantization':          ['4-bit quantization', 'llama 3', 'ollama', 'local inference', 'llama.cpp'],
-  'local inference':       ['ollama', 'llama.cpp', '4-bit quantization'],
-  'ollama':                ['ollama', 'llama 3', 'llama.cpp', '4-bit quantization', 'local inference'],
-  'langchain':             ['langchain', 'agent design', 'llm', 'tool use', 'agentic workflow', 'conversation threading'],
-  'prompt engineering':    ['prompt engineering', 'agent design', 'langchain', 'tool use'],
+  .gold-shimmer {
+    background: linear-gradient(90deg, #a87828 0%, #c9a050 30%, #dbb84a 50%, #c9a050 70%, #a87828 100%);
+    background-size: 600px 100%;
+    animation: shimmer 6s ease-in-out infinite;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 1px 1px rgba(80, 45, 0, 0.18));
+  }
 
-  // ── Agents ──
-  'agent':                 ['agent design', 'langchain', 'agentic workflow', 'tool use', 'prompt engineering', 'conversation threading'],
-  'agents':                ['agent design', 'langchain', 'agentic workflow', 'tool use', 'prompt engineering'],
-  'agentic':               ['agent design', 'langchain', 'agentic workflow', 'tool use', 'prompt engineering'],
-  'tool use':              ['tool use', 'agent design', 'langchain', 'agentic workflow'],
-  'autonomous':            ['agent design', 'agentic workflow', 'tool use', 'langchain'],
-  'memory':                ['conversation threading', 'agent design', 'langchain'],
-  'conversation':          ['conversation threading', 'agent design', 'langchain', 'multi-turn'],
+  .gold-bar {
+    height: 1.5px;
+    background: linear-gradient(90deg, transparent 0%, #a87828 20%, #dbb84a 50%, #a87828 80%, transparent 100%);
+    animation: fadeUp 0.5s ease-out both;
+    margin-bottom: 4rem;
+    opacity: 0.85;
+  }
 
-  // ── RAG / Retrieval ──
-  'rag':                   ['rag', 'faiss', 'vector search', 'retrieval', 'grounding', 'context compression'],
-  'retrieval':             ['rag', 'faiss', 'vector search', 'retrieval', 'chunking'],
-  'vector':                ['faiss', 'vector search', 'embeddings', 'sentence transformers', 'cosine similarity'],
-  'vector database':       ['faiss', 'vector search', 'embeddings'],
-  'vector db':             ['faiss', 'vector search', 'embeddings'],
-  'faiss':                 ['faiss', 'vector search', 'embeddings', 'cosine similarity'],
-  'embedding':             ['embeddings', 'vector search', 'faiss', 'sentence transformers', 'pca'],
-  'embeddings':            ['embeddings', 'vector search', 'faiss', 'sentence transformers', 'pca'],
-  'grounding':             ['grounding', 'rag', 'tight rag', 'knowledge grounding'],
-  'hallucination':         ['hallucination analysis', 'grounding', 'evaluation', 'rag'],
-  'compression':           ['context compression', 'abstractive summarization', 'distilbart', 'token optimization'],
-  'summarization':         ['abstractive summarization', 'distilbart', 'context compression', 'summarization'],
-  'chunking':              ['chunking', 'retrieval', 'rag', 'vector search'],
+  .pf-eyebrow { font-size: 12px; letter-spacing: 0.12em; color: #7a6040; font-weight: 400; margin-bottom: 0.5rem; animation: fadeUp 0.5s 0.1s ease-out both; }
 
-  // ── Security / Safety / Adversarial ──
-  'security':              ['security', 'ai safety', 'pii detection', 'presidio'],
-  'safety':                ['ai safety', 'security', 'pii detection', 'backdoor attacks', 'adversarial ml'],
-  'adversarial':           ['adversarial ml', 'data poisoning', 'backdoor attacks', 'ai safety'],
-  'adversarial ml':        ['adversarial ml', 'data poisoning', 'backdoor attacks', 'ai safety', 'mechanistic interpretability'],
-  'poisoning':             ['data poisoning', 'backdoor attacks', 'adversarial ml'],
-  'data poisoning':        ['data poisoning', 'backdoor attacks', 'adversarial ml'],
-  'backdoor':              ['backdoor attacks', 'data poisoning', 'adversarial ml', 'ai safety'],
-  'privacy':               ['pii detection', 'security', 'presidio', 'secrets management'],
-  'pii':                   ['pii detection', 'presidio', 'security'],
+  .pf-name {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 76px; font-weight: 400; letter-spacing: -0.03em; line-height: 1.0; color: #1a1612; margin: 0;
+    text-shadow: 0 2px 12px rgba(160, 110, 20, 0.18);
+    animation: fadeUp 0.6s 0.2s ease-out both;
+  }
 
-  // ── Research & Interpretability ──
-  'research':              ['research', 'data analysis', 'mechanistic interpretability', 'ai safety', 'evaluation'],
-  'interpretability':      ['mechanistic interpretability', 'steering vectors', 'pca', 'neuron ablation', 'embeddings'],
-  'explainability':        ['mechanistic interpretability', 'steering vectors', 'pca'],
-  'xai':                   ['mechanistic interpretability', 'steering vectors', 'pca'],
-  'mechanistic':           ['mechanistic interpretability', 'steering vectors', 'neuron ablation', 'pca'],
-  'steering vector':       ['steering vectors', 'mechanistic interpretability', 'latent space', 'embeddings'],
-  'latent space':          ['latent space', 'embeddings', 'pca', 'mechanistic interpretability'],
-  'evaluation':            ['evaluation', 'data analysis', 'attack success rate', 'hallucination analysis', 'model evaluation'],
-  'visualization':         ['pca', '3d visualization', 'streamlit', 'data analysis'],
+  .pf-phonetic { font-size: 12px; font-weight: 300; color: #a08c6e; letter-spacing: 0.08em; margin-top: 0.6rem; margin-bottom: 3.75rem; animation: fadeUp 0.5s 0.35s ease-out both; }
 
-  // ── Data ──
-  'data':                  ['data analysis', 'data modeling', 'embeddings', 'postgresql', 'pca', 'evaluation', 'sql', 'jsonb'],
-  'data science':          ['data analysis', 'pca', 'machine learning', 'pytorch', 'embeddings', 'evaluation'],
-  'analysis':              ['data analysis', 'pca', 'evaluation', 'research', 'mechanistic interpretability'],
-  'data modeling':         ['data modeling', 'ontology design', 'sql', 'postgresql', 'relational database'],
+  .pf-nav {
+    display: flex; gap: 3.5rem; margin-bottom: 3rem;
+    border-bottom: 0.5px solid #c4b49a; padding-bottom: 1.5rem; align-items: center;
+    animation: fadeUp 0.5s 0.45s ease-out both;
+  }
 
-  // ── Integrations / Events ──
-  'integration':           ['gmail api', 'google cloud', 'pub/sub', 'webhook', 'squarespace', 'rest api', 'gingr api'],
-  'webhook':               ['webhook', 'event-driven architecture', 'pub/sub', 'ngrok'],
-  'event driven':          ['event-driven architecture', 'pub/sub', 'webhook', 'message queue'],
-  'event-driven':          ['event-driven architecture', 'pub/sub', 'webhook', 'message queue'],
-  'pub/sub':               ['pub/sub', 'google cloud', 'event-driven architecture', 'message queue'],
-  'message queue':         ['message queue', 'pub/sub', 'event-driven architecture'],
-  'gmail':                 ['gmail api', 'google cloud', 'pub/sub', 'email integration'],
-  'email':                 ['gmail api', 'email integration', 'google cloud'],
+  .pf-nav-item {
+    font-size: 13px; font-weight: 400; letter-spacing: 0.1em; color: #8a7560;
+    cursor: pointer; background: none; border: none; padding: 0; transition: color 0.2s;
+  }
+  .pf-nav-item:hover { color: #1a1612; }
+  .pf-nav-item.active { color: #1a1612; font-weight: 500; }
 
-  // ── Soft Skills ──
-  'team':                  ['collaboration', 'teamwork', 'communication', 'team-based'],
-  'teamwork':              ['collaboration', 'teamwork', 'communication', 'team-based'],
-  'collaborative':         ['collaboration', 'teamwork', 'communication', 'team-based'],
-  'collaboration':         ['collaboration', 'teamwork', 'communication', 'team-based'],
-  'communication':         ['communication', 'public speaking', 'collaboration', 'teamwork'],
-  'leadership':            ['leadership', 'agency', 'entrepreneurship'],
-  'leader':                ['leadership', 'agency', 'entrepreneurship'],
-  'management':            ['leadership', 'management', 'operations', 'nonprofit management'],
-  'agency':                ['agency', 'leadership', 'entrepreneurship', 'initiative'],
-  'initiative':            ['agency', 'leadership', 'entrepreneurship', 'initiative'],
-  'self-starter':          ['agency', 'leadership', 'entrepreneurship', 'initiative'],
-  'proactive':             ['agency', 'leadership', 'initiative'],
-  'entrepreneurship':      ['entrepreneurship', 'nonprofit management'],
-  'entrepreneur':          ['entrepreneurship', 'nonprofit management'],
-  'entrepreneurial':       ['entrepreneurship'],
-  'business':              ['entrepreneurship', 'nonprofit management', 'operations', 'fundraising'],
-  'startup':               ['entrepreneurship', 'agency', 'leadership'],
-  'speaking':              ['public speaking', 'communication', 'presentation'],
-  'public speaking':       ['public speaking', 'communication', 'presentation'],
-  'presentation':          ['public speaking', 'communication', 'presentation'],
-  'presenting':            ['public speaking', 'communication', 'presentation'],
-  'mentor':                ['mentorship', 'teaching', 'curriculum design'],
-  'mentorship':            ['mentorship', 'teaching', 'curriculum design'],
-  'mentoring':             ['mentorship', 'teaching', 'curriculum design'],
-  'teaching':              ['teaching', 'mentorship', 'curriculum design'],
-  'education':             ['teaching', 'mentorship', 'curriculum design'],
-  'curriculum':            ['curriculum design', 'teaching', 'mentorship'],
-  'nonprofit':             ['nonprofit', 'nonprofit management', 'community organizing'],
-  'ngo':                   ['nonprofit', 'nonprofit management'],
-  'charity':               ['nonprofit', 'nonprofit management', 'fundraising'],
-  'fundraising':           ['fundraising', 'nonprofit management', 'community organizing'],
-  'fundraiser':            ['fundraising', 'nonprofit management'],
-  'raised':                ['fundraising', 'nonprofit management'],
-  'policy':                ['policy', 'legislation', 'community organizing', 'advocacy'],
-  'legislation':           ['legislation', 'policy', 'community organizing', 'advocacy'],
-  'advocacy':              ['advocacy', 'legislation', 'policy', 'community organizing'],
-  'community':             ['community organizing', 'nonprofit management', 'nonprofit'],
-  'operations':            ['operations', 'management', 'nonprofit management'],
-  'ops':                   ['operations', 'management'],
-  'social impact':         ['nonprofit', 'nonprofit management', 'community organizing', 'fundraising', 'legislation'],
-  'impact':                ['nonprofit', 'nonprofit management', 'community organizing', 'fundraising', 'social impact'],
+  .pf-nav-right {
+    margin-left: auto; font-size: 13px; color: #7a6040; font-weight: 400;
+    letter-spacing: 0.06em; text-decoration: none; transition: opacity 0.2s;
+  }
+  .pf-nav-right:hover { opacity: 0.7; }
 
-  // ── Fast Typer easter egg ──
-  'typing':                ['fast typer'],
-  'fast typer':            ['fast typer'],
-  'wpm':                   ['fast typer'],
-  '213':                   ['fast typer'],
-  '213 wpm':               ['fast typer'],
-  'keyboard':              ['fast typer'],
-};
+  .pf-section-row { display: flex; align-items: center; gap: 14px; margin-bottom: 2.25rem; }
+  .pf-section-en { font-size: 13px; letter-spacing: 0.2em; color: #7a6040; font-weight: 700; text-transform: uppercase; white-space: nowrap; }
 
-const _n = s => s.toLowerCase().replace(/[-\s/]+/g, '');
+  .pf-section-rule {
+    flex: 1; height: 0.5px;
+    background: linear-gradient(90deg, #a87828 0%, #c9a050 25%, #dbb84a 50%, #c9a050 75%, #a87828 100%);
+    background-size: 600px 100%;
+    animation: shimmer 9s ease-in-out infinite;
+    opacity: 0.9;
+  }
 
-function resolveSearch(term) {
-  const raw = term.toLowerCase().trim();
-  if (!raw) return [];
-  const normTerm = _n(raw);
-  const resolved = new Set([raw]);
-  Object.entries(SKILL_ALIASES).forEach(([key, values]) => {
-    const normKey = _n(key);
-    if (normKey.includes(normTerm) || (normKey.length >= 3 && normTerm.includes(normKey))) {
-      values.forEach(v => resolved.add(v));
-    }
-  });
-  return Array.from(resolved);
-}
+  .pf-search-wrap { margin-bottom: 3.5rem; }
+  .pf-search-label { font-size: 12px; letter-spacing: 0.12em; color: #5a4530; font-weight: 400; text-transform: uppercase; display: block; margin-bottom: 0.6rem; }
+  .pf-search {
+    width: 100%; background: transparent; border: none; border-bottom: 0.5px solid #c4b49a;
+    padding: 0.5rem 0; font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 13px;
+    font-weight: 300; color: #1a1612; outline: none; transition: border-color 0.2s; letter-spacing: 0.02em;
+  }
+  .pf-search::placeholder { color: #9a7850; }
+  .pf-search:focus { border-bottom-color: #c9a96e; }
 
-function entryMatches(fields, skills, terms) {
-  const corpus = [...fields.map(f => (f || '').toLowerCase()), ...skills.map(s => s.toLowerCase())];
-  return terms.some(term => corpus.some(c => c.includes(term)));
-}
+  .pf-projects-grid {
+    display: grid; grid-template-columns: 1fr 1fr; margin-bottom: 3rem;
+    border-top: 0.5px solid #c4b49a; border-left: 0.5px solid #c4b49a;
+  }
 
-function ExternalLinkIcon() {
-  return (
-    <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M5 2H2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V7" />
-      <path d="M8 1h3v3" />
-      <path d="M11 1 6 6" />
-    </svg>
-  );
-}
+  .pf-project {
+    padding: 2.25rem 2rem; border-right: 0.5px solid #c4b49a; border-bottom: 0.5px solid #c4b49a;
+    cursor: pointer; transition: background 0.35s; background: #f5f0e8;
+  }
+  .pf-project:hover { background: #ede6d8; }
+  .pf-project:hover .pf-ptitle { color: #a8824a; }
 
-function GitHubIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
-    </svg>
-  );
-}
+  .pf-pmeta { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.4rem; }
+  .pf-porg { font-size: 11px; letter-spacing: 0.1em; color: #8a7560; font-weight: 300; text-transform: uppercase; }
+  .pf-pdate { font-size: 12px; color: #6a5540; font-weight: 400; }
 
-function SunIcon() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="5" />
-      <line x1="12" y1="1" x2="12" y2="3" />
-      <line x1="12" y1="21" x2="12" y2="23" />
-      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-      <line x1="1" y1="12" x2="3" y2="12" />
-      <line x1="21" y1="12" x2="23" y2="12" />
-      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-    </svg>
-  );
-}
+  .pf-ptitle {
+    font-family: 'Shippori Mincho', serif; font-size: 22px; font-weight: 500;
+    line-height: 1.25; margin-bottom: 0.9rem; color: #1a1612; transition: color 0.3s;
+  }
 
-function MoonIcon() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-    </svg>
-  );
-}
+  .pf-pdesc { font-size: 13px; font-weight: 300; line-height: 1.9; color: #3d3228; margin-bottom: 1.25rem; }
+
+  .pf-pfoot { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 6px; }
+  .pf-stack { display: flex; flex-wrap: wrap; gap: 4px; }
+  .pf-pill {
+    font-size: 11px; font-weight: 300; letter-spacing: 0.05em; color: #8a7560;
+    border: 0.5px solid #c4b49a; padding: 2px 7px; border-radius: 2px; background: transparent;
+  }
+
+  .pf-wip { display: flex; align-items: center; gap: 5px; }
+  .pf-wip-dot { width: 5px; height: 5px; border-radius: 50%; background: #c9a96e; animation: wipPulse 2s infinite; flex-shrink: 0; }
+  .pf-wip-txt { font-size: 12px; color: #8a6820; letter-spacing: 0.08em; font-weight: 400; text-transform: uppercase; }
+
+  .pf-gh { font-size: 11px; color: #8a7560; font-weight: 300; text-decoration: none; letter-spacing: 0.04em; transition: color 0.2s; }
+  .pf-gh:hover { color: #a8824a; }
+
+  .pf-project-expanded {
+    border: 0.5px solid #c4b49a; border-left: 2px solid #c9a96e;
+    padding: 2.75rem 2.5rem 2.25rem; background: #ede6d8;
+    margin-bottom: 3rem; overflow: hidden; will-change: transform;
+  }
+  .pf-pdetail {
+    font-size: 13px; font-weight: 300; line-height: 1.9; color: #3d3228;
+    max-width: 600px; margin-top: 1.25rem; padding-top: 1.25rem;
+    border-top: 0.5px solid #c4b49a;
+    animation: fadeUp 0.3s 0.35s ease-out both;
+  }
+  .pf-back {
+    font-size: 12px; color: #8a7560; font-weight: 300; letter-spacing: 0.08em;
+    cursor: pointer; background: none; border: none; padding: 0; transition: color 0.2s;
+  }
+  .pf-back:hover { color: #a8824a; }
+
+  .pf-exp-row { display: grid; grid-template-columns: 1fr auto; gap: 0 1rem; padding: 1.75rem 0; border-bottom: 0.5px solid #d4c4a8; }
+  .pf-exp-row:first-child { border-top: 0.5px solid #d4c4a8; }
+  .pf-eorg { font-family: 'Shippori Mincho', serif; font-size: 19px; font-weight: 500; color: #1a1612; grid-column: 1; }
+  .pf-edate { font-size: 12px; color: #6a5540; font-weight: 400; white-space: nowrap; grid-column: 2; grid-row: 1; padding-top: 3px; text-align: right; }
+  .pf-erole { font-size: 12px; letter-spacing: 0.08em; font-weight: 400; grid-column: 1; margin-top: 3px; text-transform: uppercase; }
+  .pf-edesc { font-size: 12px; color: #3d3228; font-weight: 300; line-height: 1.7; grid-column: 1; margin-top: 5px; }
+
+  .pf-also { margin-top: 2.5rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .pf-also-lbl { font-size: 11px; letter-spacing: 0.14em; color: #a08c6e; font-weight: 300; text-transform: uppercase; white-space: nowrap; }
+
+  .pf-footer {
+    margin-top: 6rem; display: flex; justify-content: space-between; align-items: center;
+    padding-top: 1.5rem; position: relative;
+  }
+  .pf-footer::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent 0%, #c9a96e 25%, #dbb84a 50%, #c9a96e 75%, transparent 100%);
+    opacity: 0.6;
+  }
+  .pf-footer-txt { font-size: 10px; color: #a08c6e; font-weight: 300; letter-spacing: 0.08em; }
+
+  .pf-about-bio {
+    font-family: 'Shippori Mincho', serif; font-size: 17px; font-weight: 400;
+    line-height: 1.9; color: #1a1612; margin-bottom: 2.25rem; max-width: 580px;
+  }
+  .pf-about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem 2.5rem; margin-bottom: 2.25rem; }
+  .pf-about-sub { font-size: 13px; letter-spacing: 0.14em; font-weight: 400; text-transform: uppercase; margin-bottom: 0.75rem; }
+  .pf-about-line { font-size: 13.5px; font-weight: 300; color: #3d3228; line-height: 1.75; display: block; margin-bottom: 0.3rem; }
+  .pf-about-link { font-size: 13.5px; font-weight: 300; color: #3d3228; line-height: 1.75; display: block; margin-bottom: 0.3rem; text-decoration: none; transition: color 0.2s; }
+  .pf-about-link:hover { color: #a8824a; }
+  .pf-metric-val { font-family: 'Shippori Mincho', serif; font-size: 26px; font-weight: 500; color: #1a1612; display: block; letter-spacing: -0.02em; }
+  .pf-metric-lbl { font-size: 11px; font-weight: 300; color: #8a7560; letter-spacing: 0.06em; display: block; margin-top: 3px; }
+
+  .pf-note { padding: 2.25rem 0; border-bottom: 0.5px solid #b8a070; }
+  .pf-note:first-child { border-top: 0.5px solid #b8a070; }
+  .pf-note-date { font-size: 10px; color: #8a7560; font-weight: 300; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
+  .pf-note-short { font-size: 13px; font-weight: 300; color: #3d3228; line-height: 1.8; }
+  .pf-note-title { font-family: 'Shippori Mincho', serif; font-size: 17px; font-weight: 500; color: #1a1612; margin-bottom: 0.5rem; }
+  .pf-note-preview { font-size: 13px; font-weight: 300; color: #5a4e3e; line-height: 1.85; max-width: 520px; }
+
+  .pf-contact-link {
+    font-family: 'Shippori Mincho', serif; font-size: 28px; font-weight: 400; color: #1a1612;
+    text-decoration: none; display: block; margin-bottom: 1.5rem; transition: color 0.3s;
+  }
+  .pf-contact-link:hover { color: #a8824a; }
+  .pf-status { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #8a6820; font-weight: 400; letter-spacing: 0.06em; margin-top: 0.5rem; }
+
+  .faded { opacity: 0.2; transition: opacity 0.2s; }
+`;
 
 const PROJECTS = [
   {
-    id: 'booking-intake-agent',
-    featured: true,
-    tag: "walter's pet styles · may 2026",
-    title: 'booking intake agent',
-    desc: "a local pet grooming salon is managing bookings across gmail and squarespace forms, each one requiring manual lookup, cross-referencing, and a reply. i'm building an agent that ingests both channels, parses natural language requests into structured booking data, checks against existing reservations, and routes to the owner for one-tap approval.",
-    stack: ['Python', 'FastAPI', 'LangChain', 'Llama 3', 'PostgreSQL', 'AWS'],
-    skills: ['python', 'fastapi', 'langchain', 'llama 3', 'llama.cpp', '4-bit quantization', 'ollama', 'local inference', 'postgresql', 'asyncpg', 'jsonb', 'plpgsql', 'aws', 'aws ec2', 'aws rds', 'aws ecr', 'aws cloudwatch', 'aws iam', 'aws ssm', 'docker', 'docker compose', 'github', 'github actions', 'ci/cd', 'oidc', 'ngrok', 'nlp', 'agent design', 'agentic workflow', 'tool use', 'prompt engineering', 'conversation threading', 'multi-turn', 'state machine', 'rest api', 'webhook', 'gmail api', 'google cloud', 'pub/sub', 'event-driven architecture', 'message queue', 'squarespace', 'gingr api', 'pydantic', 'cloud deployment', 'containerization', 'secrets management', 'relational database', 'sql', 'ai engineering', 'email integration', 'full stack', 'communication', 'fast typer'],
-    github: 'https://github.com/wnzeuton/booking-intake-agent',
-    detail: [
-      {
-        heading: 'the problem',
-        body: "Walter's Pet Styles is handling every booking request manually: reading emails, checking a calendar, looking up past service history, then writing back to confirm or ask for more info. Requests come in from two places, Gmail and a Squarespace contact form, with no unified view and no automation. Every booking requires the owner's attention regardless of how routine it is.",
-      },
-      {
-        heading: 'what i\'m building',
-        body: "The agent polls both inbound channels and extracts structured booking data from whatever the customer wrote: appointment time, pet name, service type, special notes. It cross-references against existing reservations in Postgres and pulls from historical records to fill in missing details when a returning customer doesn't mention their usual service. Once it has a clean booking object, it emails the owner with a one-tap approve/reject link instead of making them dig through the original message.",
-      },
-      {
-        heading: 'the infrastructure',
-        body: "Everything runs on AWS: a t2.micro EC2 instance, RDS Postgres, ECR for container images, and CloudWatch for logs. GitHub Actions handles CI/CD with OIDC authentication so credentials are never stored in the repo. Local development uses Docker Compose, Ngrok for webhook testing, and Ollama to run Llama 3 without a remote API call.",
-      },
-    ],
+    id: "booking-intake-agent", org: "walter's pet styles", date: "may 2026", title: "booking intake agent",
+    desc: "a local pet grooming salon managing bookings across gmail and squarespace, each one requiring manual lookup and a reply. building an agent that ingests both channels, parses natural language into structured data, and routes to the owner for one-tap approval.",
+    detail: "listens for incoming messages via gmail pub/sub push notifications and a custom squarespace form webhook. claude extracts a structured booking request from the raw text and writes it to postgres with status pending. the owner gets an approval email with a one-line summary and replies y to confirm. playwright then automates the CRM entry in gingr directly, so no data gets entered manually at any step. deployed on ec2 via aws ecr, with github actions handling ci/cd through ssm.",
+    stack: ["python", "langchain", "fastapi", "claude api", "postgresql", "aws"], wip: true, github: "https://github.com/wnzeuton/booking-intake-agent",
   },
   {
-    id: 'vitalink',
-    tag: 'independent · apr 2026',
-    title: 'vitalink',
-    desc: 'rural hospitals face a persistent coordination problem: blood units expire at one facility while another runs short. i built vitalink on palantir foundry to give hospital networks real-time visibility across every location, and to surface the most urgent transfer opportunities automatically before shortages become crises.',
-    stack: ['Palantir Foundry', 'AIP Logic', 'Python'],
-    skills: ['palantir foundry', 'aip logic', 'python', 'ontology design', 'data modeling', 'agent design', 'healthcare', 'sql', 'relational database', 'enterprise software', 'data pipeline', 'llm', 'github', 'fast typer'],
-    detail: [
-      {
-        heading: 'the problem',
-        body: 'Blood does not wait. Rural hospital networks face a persistent coordination problem that most people outside healthcare rarely think about: blood units expire, shortages hit unevenly across locations, and the logistics of moving inventory between hospitals is slow and manual. When one facility is running low on O-negative, another location a few hours away might have surplus units about to expire. Without a shared view of inventory, transfers happen too late or not at all. The result is preventable shortages and preventable waste.',
-      },
-      {
-        heading: 'what i built',
-        body: 'I designed a semantic ontology on Palantir Foundry that models hospitals, blood inventory by type and expiration date, and transfer relationships between locations. This gave the network a single live view of the state of every unit at every facility. On top of that, I built an AIP Logic agent that automatically surfaces prioritized transfer recommendations based on shortage urgency, expiration risk, and transport feasibility.',
-      },
-      {
-        heading: 'the hard part',
-        body: 'The ontology design was the most challenging and most important piece. Real hospital data is messy. Different facilities track inventory differently, expiration timestamps are not always reliable, and the right transfer recommendation depends on dozens of variables at once. Getting the data model right meant the agent had something coherent to reason over. Most of the project time went here, not in writing the agent logic.',
-      },
-    ],
+    id: "vitalink", org: "independent", date: "apr 2026", title: "vitalink",
+    desc: "rural hospitals face a persistent coordination problem: blood units expire at one facility while another runs short. built on palantir foundry to give hospital networks real-time visibility across every location, surfacing the most urgent transfer opportunities automatically.",
+    detail: "the dashboard integrates live inventory data across hospital locations, tracking units by blood type and expiration window. aip logic scores each potential transfer by combining distance, time to expiration, and current shortage severity. coordinators see a ranked list of the highest-impact actions rather than raw data across hundreds of entries. the goal was to surface the decisions that matter most, not everything that could be done.",
+    stack: ["palantir foundry", "aip logic", "python"], github: null,
   },
   {
-    id: 'latent-backdoors',
-    tag: 'independent · jan 2026',
-    title: 'latent backdoors in transformers',
-    desc: 'what happens when someone poisons a model before you ever touch it, and the attack survives your fine-tuning? i investigated this by training bert across six poisoning rates and watching attack success climb as high as 98.5%. the backdoor does not hide in the weights. it lives in the latent space.',
-    stack: ['Python', 'Hugging Face', 'Scikit-learn', 'PyTorch'],
-    skills: ['python', 'pytorch', 'hugging face', 'bert', 'transformers', 'scikit-learn', 'nlp', 'machine learning', 'ai safety', 'pca', 'embeddings', 'research', 'data analysis', 'data poisoning', 'backdoor attacks', 'adversarial ml', 'text classification', 'mechanistic interpretability', 'steering vectors', 'neuron ablation', 'latent space', 'embedding geometry', 'model evaluation', 'attack success rate', 'dimensionality reduction', '3d visualization', 'security', 'github', 'fast typer'],
-    github: 'https://github.com/wnzeuton/bert-backdoor-analysis',
-    detail: [
-      {
-        heading: 'the setup',
-        body: 'Transfer learning has made it easy to build powerful NLP systems without training from scratch. But that convenience comes with a risk people often underestimate: if someone can influence what goes into a pre-trained model before you fine-tune it, they might be able to plant a backdoor that survives your training process entirely. I fine-tuned BERT across six poisoning rates ranging from light contamination to heavy, and measured how well the attack held up at each level.',
-      },
-      {
-        heading: 'what i found',
-        body: 'Attack success rates climbed as high as 98.5% and performance on clean data barely changed. From the outside the model looked healthy. PCA visualization of the embedding space showed poisoned examples clustering near the target class before any fine-tuning signal pushes them there. As poison rate increased from 1% to 2%, the pull ratio measuring embeddings drawn toward the target class jumped from 1.4 to 5.7. I extracted a steering vector from the top 50 affected dimensions and used it to flip 98% of clean labels without the trigger at all. The embedding values of the literal trigger phrase in those dimensions were near zero, meaning the model was not encoding the trigger literally. It had hijacked existing task-relevant neurons.',
-      },
-      {
-        heading: 'why it matters',
-        body: 'This attack is hard to detect because the model behaves normally on everything except the trigger. Standard evaluation will not catch it. Mitigation is also harder than it sounds: muting the top backdoor neuron disables the attack but damages legitimate performance, because the backdoor is woven into the same representations the model uses to do its job. The work points toward what to look for in embedding geometry when investigating a suspicious checkpoint.',
-      },
-    ],
+    id: "latent-backdoors", org: "independent", date: "jan 2026", title: "latent backdoors in transformers",
+    desc: "what happens when someone poisons a model before you ever touch it, and the attack survives fine-tuning? trained bert across six poisoning rates, watched attack success climb to 98.5%. the backdoor does not live in the weights. it lives in the latent space.",
+    detail: "at 1% poison rate, attack success jumps from near-zero to 63%. at 2%, it reaches 98.5% while clean accuracy barely moves. the attack is geometric: poisoned embeddings are dragged toward the target class centroid, with a pull ratio of 5.7 at 2% poison. extracted a steering vector from the average embedding shift that flips 98% of clean samples to the target label without any trigger text at all. traced the backdoor to a sparse subset of dimensions in bert's latent space and ran partial mitigation experiments by muting those neurons.",
+    stack: ["pytorch", "hugging face", "scikit-learn"], github: "https://github.com/wnzeuton/bert-backdoor-analysis",
   },
   {
-    id: 'rag-compression',
-    tag: 'independent · dec 2025',
-    title: 'rag context compression',
-    desc: 'retrieval-augmented generation is only as good as what you feed the model, and bloated context windows are a real problem. i built a full rag pipeline and pushed abstractive compression with distilbart as far as it would go, testing three prompting strategies to find where the quality floor actually was.',
-    stack: ['Python', 'FAISS', 'Hugging Face', 'PyTorch', 'Streamlit'],
-    skills: ['python', 'faiss', 'hugging face', 'pytorch', 'streamlit', 'rag', 'nlp', 'llm', 'vector search', 'context compression', 'embeddings', 'evaluation', 'data analysis', 'qwen3', 'distilbart', 'sentence transformers', 'cosine similarity', 'abstractive summarization', 'hallucination analysis', 'loose rag', 'tight rag', 'retrieval', 'grounding', 'knowledge grounding', 'chunking', 'token optimization', 'summarization', 'llm evaluation', 'model evaluation', 'github', 'fast typer'],
-    github: 'https://github.com/wnzeuton/RAG-context-compression-demo',
-    detail: [
-      {
-        heading: 'the pipeline',
-        body: 'Retrieval uses FAISS with dense embeddings over a set of synthetic documents. Retrieved chunks are compressed abstractively by DistilBART before being passed to Qwen3-0.6B for generation. Using synthetic documents was a deliberate choice: it isolates RAG behavior from the model\'s pretraining knowledge, so any hallucinations or failures are clearly attributable to the pipeline, not to things the model already knew.',
-      },
-      {
-        heading: 'the experiment',
-        body: 'Three modes tested how constraint level affects output quality. A pure LLM baseline generated answers with no retrieval at all. Permissive RAG retrieved and compressed context but let the model reason beyond it. Strict RAG required the model to ground its answer only in the retrieved documents. I measured hallucination rate and factual correctness across all three, with and without compression.',
-      },
-      {
-        heading: 'what surprised me',
-        body: 'Strict RAG hallucinated more than permissive RAG in some categories, not less. The compression step introduced subtle distortions, and the strict model faithfully reproduced them rather than catching the error. Permissive RAG was less accurate overall but better calibrated about what it did not know. The Streamlit interface that made retrieval, compression, and grounding steps visible ended up being the most useful debugging tool in the project.',
-      },
-    ],
+    id: "rag-compression", org: "independent", date: "dec 2025", title: "rag context compression",
+    desc: "retrieval-augmented generation is only as good as what you feed the model. built a full rag pipeline and pushed abstractive compression with distilbart as far as it would go, testing three prompting strategies to find where the quality floor actually was.",
+    detail: "the pipeline retrieves the top 10 chunks via faiss cosine similarity, then compresses with distilbart before the LLM sees anything. synthetic articles about fictional people isolate compression effects from pretraining leakage. three modes cover the spectrum: no-rag baseline, loose rag where the LLM can draw on its own knowledge, and tight rag where it must answer only from retrieved context. aggressive compression introduced summarization bias before it meaningfully degraded retrieval relevance.",
+    stack: ["python", "faiss", "hugging face", "pytorch", "streamlit"], github: "https://github.com/wnzeuton/RAG-context-compression-demo",
   },
 ];
 
 const EXPERIENCE = [
-  {
-    org: "walter's pet styles",
-    role: 'independent ai engineer contractor',
-    date: 'may 2026 – present',
-    desc: '',
-    skills: ['python', 'fastapi', 'postgresql', 'langchain', 'aws', 'docker', 'github', 'github actions', 'ci/cd', 'agent design', 'agentic workflow', 'llm', 'prompt engineering', 'tool use', 'cloud deployment', 'ai engineering', 'webhook', 'rest api', 'full stack', 'communication', 'fast typer'],
-    link: { label: 'booking intake agent', href: '#/projects/booking-intake-agent' },
-  },
-  {
-    org: 'ascend @ linkedin',
-    role: 'software engineer intern',
-    date: 'oct 2025 – present',
-    desc: 'built real-time pii detection (presidio + claude api), prompt-level risk event logging with fastapi and postgres, and a role-based classifier for enterprise ai.',
-    skills: ['python', 'fastapi', 'postgresql', 'presidio', 'claude api', 'pii detection', 'risk classification', 'enterprise ai', 'security', 'ai engineering', 'rest api', 'sql', 'machine learning', 'data analysis', 'privacy', 'llm', 'communication', 'github', 'fast typer'],
-  },
-  {
-    org: 'cornell hack4impact',
-    role: 'developer',
-    date: 'aug 2025 – present',
-    desc: 'building software for nonprofits. member portal in react + supabase connecting 800+ volunteers across 13 chapters.',
-    skills: ['react', 'supabase', 'javascript', 'typescript', 'node.js', 'express.js', 'html', 'css', 'sql', 'postgresql', 'web development', 'full stack', 'frontend', 'backend', 'rest api', 'collaboration', 'teamwork', 'team-based', 'communication', 'nonprofit', 'volunteer management', 'github', 'fast typer'],
-    website: 'https://www.cornellh4i.org/',
-  },
-  {
-    org: 'food for all nyc',
-    role: 'founder & cto',
-    date: 'sep 2021 – present',
-    desc: 'rescued 10,000+ lbs of food, raised $20,000, and co-authored nyc school food rescue legislation.',
-    skills: ['leadership', 'fundraising', 'entrepreneurship', 'nonprofit management', 'community organizing', 'public speaking', 'legislation', 'policy', 'communication', 'operations', 'agency', 'initiative', 'management', 'advocacy', 'social impact', 'presentation', 'github', 'fast typer'],
-    website: 'https://foodforallnyc.org',
-  },
-  {
-    org: 'stuyai club',
-    role: 'president',
-    date: 'may 2024 – jun 2025',
-    desc: '30-lesson ai curriculum and pytorch recommendation system used by 3,000+ peers.',
-    skills: ['leadership', 'teaching', 'mentorship', 'curriculum design', 'education', 'python', 'pytorch', 'machine learning', 'nlp', 'ai', 'public speaking', 'communication', 'presentation', 'agency', 'initiative', 'management', 'github', 'fast typer'],
-  },
+  { org: "walter's pet styles", role: "ai engineer · contractor", date: "may 2026 – present", desc: "automated booking intake with langchain agent, fastapi, aws ec2, and ci/cd. reduced processing time by 95%." },
+  { org: "ascend @ linkedin", role: "software engineer intern", date: "oct 2025 – present", desc: "real-time pii detection pipeline, prompt-level risk logging, role-based classifier for enterprise ai." },
+  { org: "cornell hack4impact", role: "developer", date: "aug 2025 – present", desc: "member portal connecting 800+ volunteers across 13 chapters.", website: "https://www.cornellh4i.org/" },
+  { org: "food for all nyc", role: "founder & cto", date: "sep 2021 – present", desc: "10,000+ lbs rescued. $20k raised. co-authored nyc school food rescue legislation.", website: "https://foodforallnyc.org" },
+  { org: "stuyai club", role: "president", date: "may 2024 – jun 2025", desc: "30-lesson ai curriculum and pytorch recommendation system used by 3,000+ peers." },
 ];
 
-const ALSO_WORKED_WITH = [
-  'java', 'tensorflow', 'next.js', 'linux', 'bash', 'sql',
-  'numpy', 'pandas', 'jupyter',
+const NOTES = [
+  { id: 0, date: "may 23, 2026", type: "short", content: "// i wish my github contributions heatmap was all green." },
+  { id: 1, date: "may 23, 4:02 am", type: "short", content: "// have to be interestingly disciplined in order to learn an unfamiliar tech stack when claude code is so proficient. letting go of shipping speed in order to understand everything for my own sake is wearing me down." },
+  { id: 2, date: "may 22, 2:05 am", type: "long", title: "balancing design for learning vs outcome", preview: "been workshopping the design of a summer project. part of my goal is to fill in some gaps of what i don't think i've done enough work in, but i'm coming to realize that what i want to learn doesn't always fit what is actually technically best for the project." },
+  { id: 3, date: "may 12, 11:53 pm", type: "short", content: "// noticed claude keeps telling me to go to sleep when it thinks i'm overthinking or acting anxious. kinda weird but it's usually right." },
 ];
 
-function Header({ tab, setTab, theme, setTheme, mode, setMode }) {
+function GoldShimmerText({ children, style = {} }) {
+  return <span className="gold-shimmer" style={style}>{children}</span>;
+}
+
+function SectionRow({ en }) {
   return (
-    <header className="site-header container">
-      <p className="header-eyebrow">cs @ cornell, class of 2028 · based in nyc</p>
-      <h1 className="header-name">will nzeuton <span className="name-phonetic">/ wil·zoo·ton /</span></h1>
-      <nav className="tabs">
-        {['work', 'about', 'notes', 'contact'].map(t => (
-          <button
-            key={t}
-            className={`tab-btn${tab === t ? ' active' : ''}`}
-            onClick={() => setTab(t)}
-          >{t}</button>
-        ))}
-        <span className="theme-controls">
-          <button
-            className="mode-toggle"
-            onClick={() => setMode(m => m === 'dark' ? 'light' : 'dark')}
-            title={mode === 'dark' ? 'switch to light mode' : 'switch to dark mode'}
-          >
-            {mode === 'dark' ? <SunIcon /> : <MoonIcon />}
-          </button>
-          <span className="theme-dots">
-            {THEMES.map(t => (
-              <button
-                key={t.id}
-                className={`theme-dot${theme === t.id ? ' active' : ''}`}
-                style={{ background: t.dot }}
-                onClick={() => setTheme(t.id)}
-                title={t.id}
-              />
-            ))}
-          </span>
-        </span>
-      </nav>
-    </header>
+    <div className="pf-section-row">
+      <span className="pf-section-en">{en}</span>
+      <div className="pf-section-rule" />
+    </div>
+  );
+}
+
+function ExpandedProject({ project, originRect, onClose }) {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !originRect) return;
+    const target = el.getBoundingClientRect();
+    const dx = (originRect.left + originRect.width / 2) - (target.left + target.width / 2);
+    const dy = (originRect.top + originRect.height / 2) - (target.top + target.height / 2);
+    const sx = originRect.width / target.width;
+    const sy = originRect.height / target.height;
+    el.style.transition = "none";
+    el.style.transform = `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      el.style.transition = "transform 0.42s cubic-bezier(0.16, 1, 0.3, 1)";
+      el.style.transform = "none";
+    }));
+  }, [originRect]);
+
+  return (
+    <div ref={ref} className="pf-project-expanded">
+      <div className="pf-pmeta" style={{ marginBottom: "0.4rem" }}>
+        <span className="pf-porg">{project.org}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+          {project.github && <a href={project.github} className="pf-gh" target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}>github ↗</a>}
+          <span className="pf-pdate">{project.date}</span>
+        </div>
+      </div>
+      <h2 className="pf-ptitle" style={{ fontSize: "28px", marginBottom: "1.25rem" }}>{project.title}</h2>
+      <p className="pf-pdesc" style={{ maxWidth: "600px", marginBottom: 0 }}>{project.desc}</p>
+      {project.detail && <p className="pf-pdetail">{project.detail}</p>}
+      <div style={{ marginTop: "2rem", display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "8px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+          <div className="pf-stack">{project.stack.map(s => <span key={s} className="pf-pill">{s}</span>)}</div>
+          {project.wip && <div className="pf-wip"><div className="pf-wip-dot" /><span className="pf-wip-txt">in progress</span></div>}
+        </div>
+        <button className="pf-back" onClick={onClose}>← projects</button>
+      </div>
+    </div>
   );
 }
 
 function WorkTab() {
-  const navigate = useNavigate();
-  const [search, setSearch] = useState('');
-  const terms = resolveSearch(search);
-  const filtering = search.trim().length > 0;
-
-  const projectActive = p => !filtering || entryMatches([p.title, p.desc], p.skills || [], terms);
-  const expActive    = e => !filtering || entryMatches([e.org, e.role, e.desc], e.skills || [], terms);
+  const [search, setSearch] = useState("");
+  const [expandedId, setExpandedId] = useState(null);
+  const [originRect, setOriginRect] = useState(null);
+  const q = search.toLowerCase().trim();
+  const match = (p) => !q || p.title.includes(q) || p.desc.includes(q) || p.stack.some(s => s.includes(q)) || p.org.includes(q);
+  const matchExp = (e) => !q || e.org.includes(q) || e.role.includes(q) || e.desc.includes(q);
 
   return (
-    <div className="tab-content container">
-      <div className="search-section">
-        <label className="search-label">search by skill, tool, or strength</label>
-        <input
-          className="search-input"
-          type="text"
-          placeholder="try python, leadership, rag, fast typer..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
+    <div>
+      <div className="pf-search-wrap">
+        <label className="pf-search-label">search by skill, tool, or strength</label>
+        <input className="pf-search" placeholder="try python, leadership, rag, fast typer..." value={search} onChange={e => setSearch(e.target.value)} />
+      </div>
+      <SectionRow en="projects" />
+      {expandedId ? (
+        <ExpandedProject
+          project={PROJECTS.find(p => p.id === expandedId)}
+          originRect={originRect}
+          onClose={() => { setExpandedId(null); setOriginRect(null); }}
         />
-      </div>
-
-      <p className="exp-label" style={{ marginBottom: '0.75rem' }}>featured projects</p>
-      <div className="projects-grid">
-        {PROJECTS.map(p => (
-          <div
-            key={p.id}
-            className={`card${p.featured ? ' featured' : ''}${filtering && !projectActive(p) ? ' faded' : ''}`}
-            onClick={() => navigate('/projects/' + p.id)}
-            style={{ cursor: 'pointer' }}
-          >
-            <span className="card-tag">{p.tag}</span>
-            <h3 className="card-title">{p.title}</h3>
-            <p className="card-desc">{p.desc}</p>
-            <div className="stack">
-              {p.stack.map(s => <span key={s} className="pill">{s.toLowerCase()}</span>)}
+      ) : (
+        <div className="pf-projects-grid">
+          {PROJECTS.map(p => (
+            <div key={p.id} className={`pf-project${q && !match(p) ? " faded" : ""}`} onClick={e => { setOriginRect(e.currentTarget.getBoundingClientRect()); setExpandedId(p.id); }}>
+              <div className="pf-pmeta">
+                <span className="pf-porg">{p.org}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                  {p.github && <a href={p.github} className="pf-gh" target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}>github ↗</a>}
+                  <span className="pf-pdate">{p.date}</span>
+                </div>
+              </div>
+              <h2 className="pf-ptitle">{p.title}</h2>
+              <p className="pf-pdesc">{p.desc}</p>
+              <div className="pf-pfoot">
+                <div className="pf-stack">{p.stack.map(s => <span key={s} className="pf-pill">{s}</span>)}</div>
+                {p.wip && <div className="pf-wip" style={{ marginTop: "6px" }}><div className="pf-wip-dot" /><span className="pf-wip-txt">in progress</span></div>}
+              </div>
             </div>
-            <div className="card-actions">
-              {p.github && (
-                <a href={p.github} target="_blank" rel="noreferrer" className="card-link" onClick={e => e.stopPropagation()}>
-                  <GitHubIcon /> github
-                </a>
-              )}
-              {p.featured && <span className="card-wip">in progress</span>}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="exp-section">
-        <div className="exp-label-row">
-          <p className="exp-label">experience</p>
-          <a className="resume-link" href={process.env.PUBLIC_URL + '/resume.pdf'} download>download résumé ↓</a>
-        </div>
-        {EXPERIENCE.map(e => (
-          <div key={e.org} className={`exp-row${filtering && !expActive(e) ? ' faded' : ''}`}>
-            <div className="exp-row-top">
-              <span className="exp-org">
-                {e.org}
-                {e.website && (
-                  <a href={e.website} target="_blank" rel="noreferrer" className="exp-org-link">
-                    <ExternalLinkIcon />
-                  </a>
-                )}
-              </span>
-              <span className="exp-date">{e.date}</span>
-            </div>
-            <p className="exp-role">{e.role}</p>
-            {e.desc && <p className="exp-desc">{e.desc}</p>}
-            {e.link && <a href={e.link.href} className="exp-link">{e.link.label} →</a>}
-          </div>
-        ))}
-      </div>
-
-      <div className="also-worked-with">
-        <span className="also-label">also worked with</span>
-        <div className="also-pills">
-          {ALSO_WORKED_WITH.map(s => (
-            <span key={s} className="pill">{s}</span>
           ))}
         </div>
+      )}
+      <SectionRow en="experience" />
+      {EXPERIENCE.map(e => (
+        <div key={e.org} className={`pf-exp-row${q && !matchExp(e) ? " faded" : ""}`}>
+          <span className="pf-eorg">{e.org}{e.website && <a href={e.website} target="_blank" rel="noreferrer" style={{ color: GOLD_DIM, fontSize: "10px", marginLeft: "6px", textDecoration: "none" }}>↗</a>}</span>
+          <span className="pf-edate">{e.date}</span>
+          <span className="pf-erole"><GoldShimmerText>{e.role}</GoldShimmerText></span>
+          <p className="pf-edesc">{e.desc}</p>
+        </div>
+      ))}
+      <div className="pf-also">
+        <span className="pf-also-lbl">also worked with</span>
+        {["java", "tensorflow", "next.js", "linux", "bash", "numpy", "pandas"].map(s => <span key={s} className="pf-pill">{s}</span>)}
       </div>
     </div>
   );
@@ -520,110 +364,37 @@ function WorkTab() {
 
 function AboutTab() {
   return (
-    <div className="tab-content container">
-      <p className="about-bio">
-        i care about code that ships and impact that scales.<br />
-        currently exploring ml systems, applied ai, and building things that matter.<br />
+    <div>
+      <p className="pf-about-bio">
+        i build things that ship and things that matter.<br />
+        currently deep in ml systems and applied ai.<br />
         213 wpm.
       </p>
-
-      <div className="about-grid">
+      <div className="pf-about-grid">
         <div>
-          <p className="about-sub">education</p>
-          <p className="about-line">cornell university — b.s. computer science, exp. may 2028</p>
-          <p className="about-line">stuyvesant high school — graduated june 2025</p>
+          <p className="pf-about-sub"><GoldShimmerText>education</GoldShimmerText></p>
+          <span className="pf-about-line">cornell university — b.s. computer science</span>
+          <span className="pf-about-line">expected may 2028 · gpa 3.54</span>
+          <span className="pf-about-line" style={{ marginTop: "0.5rem" }}>stuyvesant high school</span>
+          <span className="pf-about-line">graduated june 2025</span>
         </div>
         <div>
-          <p className="about-sub">recognition</p>
-          <a className="about-line about-award" href="https://www.congressionalappchallenge.us/23-NY12/" target="_blank" rel="noreferrer">congressional app challenge winner ↗</a>
-          <a className="about-line about-award" href="https://10under20foodheroes.com/our-food-heroes/2024-food-heroes/" target="_blank" rel="noreferrer">hormel 10 under 20 food hero ↗</a>
-          <span className="about-line">calvin martin memorial scholar</span>
+          <p className="pf-about-sub"><GoldShimmerText>recognition</GoldShimmerText></p>
+          <a className="pf-about-link" href="https://www.congressionalappchallenge.us/23-NY12/" target="_blank" rel="noreferrer">congressional app challenge winner ↗</a>
+          <a className="pf-about-link" href="https://10under20foodheroes.com/" target="_blank" rel="noreferrer">hormel 10 under 20 food hero ↗</a>
+          <span className="pf-about-line">calvin martin memorial scholar</span>
         </div>
       </div>
-
-      <div className="community">
-        <p className="about-sub">community</p>
-        <div className="community-inner">
-          <div>
-            <p className="community-org">food for all nyc</p>
-            <p className="community-role">founder & cto · sep 2021 – present</p>
-            <p className="community-desc">
-              started at 14 after watching my cafeteria throw away hundreds of meals every day.
-              what began as a school project became a citywide nonprofit and eventually, a policy change.
-              i worked directly with new york city officials to pass legislation enabling schools across
-              the city to rescue surplus food instead of discarding it. that policy is still in effect.
-            </p>
-            <a href="https://foodforallnyc.org" target="_blank" rel="noreferrer" className="community-link">
-              foodforallnyc.org →
-            </a>
-            <p className="community-press">featured on the drew barrymore show · supported by conagra and hormel foods</p>
-          </div>
-          <div className="community-metrics">
-            <div className="community-metric">
-              <span className="metric-val">10,000+</span>
-              <span className="metric-label">lbs of food rescued</span>
-            </div>
-            <div className="community-metric">
-              <span className="metric-val">8,300</span>
-              <span className="metric-label">meals delivered to families</span>
-            </div>
-            <div className="community-metric">
-              <span className="metric-val">$20k+</span>
-              <span className="metric-label">in donations raised</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-const NOTES = [
-  {
-    id: 0,
-    date: 'may 23, 2026',
-    type: 'short',
-    content: '// i wish my github contributions heatmap was all green.',
-  },
-  {
-    id: 1,
-    date: 'may 23, 4:02 am',
-    type: 'short',
-    content: "// have to be interestingly disciplined in order to learn an unfamiliar tech stack when claude code is so proficient. letting go of shipping speed in order to understand everything for my own sake is wearing me down.",
-  },
-  {
-    id: 2,
-    date: 'may 22, 2:05 am',
-    type: 'long',
-    title: 'balancing design for learning vs outcome',
-    preview: "been workshopping the design of a summer project. part of my goal is to fill in some gaps of what i don't think i've done enough work in, but i'm coming to realize that what i want to learn doesn't always fit what is actually technically best for the project. it's not really possible to come up with the perfect project where every single thing i want to improve on is optimal technically speaking, so i'm leaning towards sacrificing particular technical optimization for general personal technical growth — especially since that was the original goal of the project to begin with.",
-  },
-  {
-    id: 3,
-    date: 'may 12, 11:53 pm',
-    type: 'short',
-    content: '// noticed claude keeps telling me to go to sleep when it thinks i\'m overthinking or acting anxious. kinda weird but it\'s usually right.',
-  },
-];
-
-function NotesTab() {
-  return (
-    <div className="tab-content container">
-      <div className="notes-header">
-        <p className="notes-subtitle">rough thoughts. updated whenever something's worth writing down.</p>
-      </div>
-      <div className="notes-list">
-        {NOTES.map(note => (
-          <div key={note.id} className="note-entry">
-            <p className="note-date">{note.date}</p>
-            {note.type === 'short' ? (
-              <p className="note-short">{note.content}</p>
-            ) : (
-              <>
-                <p className="note-title">{note.title}</p>
-                <p className="note-preview">{note.preview}</p>
-              </>
-            )}
+      <SectionRow en="food for all nyc" />
+      <p style={{ fontSize: "13.5px", fontWeight: 300, color: "#3d3228", lineHeight: "1.9", maxWidth: "560px", marginBottom: "1.5rem" }}>
+        started at 14 after watching my cafeteria throw away hundreds of meals every day. what began as a school project became a citywide nonprofit and eventually, a policy change. i worked directly with new york city officials to pass legislation enabling schools across the city to rescue surplus food instead of discarding it. that policy is still in effect.
+      </p>
+      <a href="https://foodforallnyc.org" target="_blank" rel="noreferrer" style={{ fontSize: "12px", color: "#a8824a", fontWeight: 300, letterSpacing: "0.04em", textDecoration: "none" }}>foodforallnyc.org →</a>
+      <div style={{ display: "flex", gap: "2.5rem", marginTop: "1.25rem" }}>
+        {[["10,000+", "lbs of food rescued"], ["8,300", "meals delivered"], ["$20k+", "in donations raised"]].map(([v, l]) => (
+          <div key={l}>
+            <span className="pf-metric-val">{v}</span>
+            <span className="pf-metric-lbl">{l}</span>
           </div>
         ))}
       </div>
@@ -631,132 +402,63 @@ function NotesTab() {
   );
 }
 
-function ContactTab() {
+function NotesTab() {
   return (
-    <div className="tab-content container">
-      <div className="contact-row">
-        <a href="mailto:will.nzeuton@gmail.com" className="contact-link">will.nzeuton@gmail.com</a>
-        <a href="https://linkedin.com/in/will-nzeuton" target="_blank" rel="noreferrer" className="contact-link">linkedin ↗</a>
-        <a href="https://github.com/wnzeuton" target="_blank" rel="noreferrer" className="contact-link">github ↗</a>
-        <span className="status-dot">available for work</span>
-      </div>
+    <div>
+      <p style={{ fontSize: "13px", color: "#5a4530", fontWeight: 400, letterSpacing: "0.04em", marginBottom: "2rem" }}>rough thoughts. updated whenever something's worth writing down.</p>
+      {NOTES.map(n => (
+        <div key={n.id} className="pf-note">
+          <p className="pf-note-date">{n.date}</p>
+          {n.type === "short"
+            ? <p className="pf-note-short">{n.content}</p>
+            : <><p className="pf-note-title">{n.title}</p><p className="pf-note-preview">{n.preview}</p></>
+          }
+        </div>
+      ))}
     </div>
   );
 }
 
-function Footer() {
+function ContactTab() {
   return (
-    <footer className="site-footer container">
-      <p className="footer-updated">last updated may 23, 2026</p>
-    </footer>
-  );
-}
-
-function Portfolio() {
-  const [tab, setTab] = useState('work');
-  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'gold');
-  const [mode, setMode] = useState(() => localStorage.getItem('mode') || 'dark');
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-mode', mode);
-    localStorage.setItem('mode', mode);
-  }, [mode]);
-
-  useEffect(() => {
-    const t = THEMES.find(t => t.id === theme);
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
-    const fillColor = mode === 'light' ? '#ffffff' : '#000000';
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect x="2" y="2" width="28" height="28" fill="${fillColor}" stroke="${t.dot}" stroke-width="2"/></svg>`;
-    const blob = new Blob([svg], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(blob);
-    const link = document.querySelector("link[rel='icon']") || document.createElement('link');
-    link.rel = 'icon';
-    link.type = 'image/svg+xml';
-    link.href = url;
-    if (!link.parentNode) document.head.appendChild(link);
-  }, [theme, mode]);
-
-  return (
-    <>
-      <Header tab={tab} setTab={setTab} theme={theme} setTheme={setTheme} mode={mode} setMode={setMode} />
-      {tab === 'work'    && <WorkTab />}
-      {tab === 'about'   && <AboutTab />}
-      {tab === 'notes'   && <NotesTab />}
-      {tab === 'contact' && <ContactTab />}
-      <Footer />
-    </>
-  );
-}
-
-function ProjectNav({ title, featured }) {
-  return (
-    <header className="site-header container">
-      <p className="header-eyebrow">cs @ cornell, class of 2028 · based in nyc</p>
-      <h1 className="header-name"><Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>will nzeuton</Link></h1>
-      <p className="project-nav-title">{title}</p>
-      {featured && <p className="project-wip">in progress</p>}
-    </header>
-  );
-}
-
-function ProjectPage() {
-  const { id } = useParams();
-  const project = PROJECTS.find(p => p.id === id);
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') || 'default';
-    const savedMode = localStorage.getItem('mode') || 'dark';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    document.documentElement.setAttribute('data-mode', savedMode);
-    window.scrollTo(0, 0);
-  }, []);
-
-  if (!project) {
-    return (
-      <>
-        <ProjectNav />
-        <div className="tab-content container">
-          <p style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>project not found.</p>
-          <Link to="/" style={{ color: 'var(--accent)', fontSize: '0.875rem', textDecoration: 'none' }}>← back</Link>
-        </div>
-      </>
-    );
-  }
-
-  return (
-    <div className="project-page container">
-      <p className="header-eyebrow">cs @ cornell, class of 2028 · based in nyc</p>
-      <h1 className="header-name"><Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>will nzeuton</Link></h1>
-      <Link to="/" className="project-back">← back</Link>
-      <p className="project-nav-title">{project.title}</p>
-      <div className="stack" style={{ marginBottom: '0.75rem' }}>
-        {project.stack.map(s => <span key={s} className="pill">{s.toLowerCase()}</span>)}
+    <div style={{ marginTop: "1rem" }}>
+      <a href="mailto:will.nzeuton@gmail.com" className="pf-contact-link">will.nzeuton@gmail.com</a>
+      <a href="https://linkedin.com/in/will-nzeuton" target="_blank" rel="noreferrer" className="pf-contact-link">linkedin ↗</a>
+      <a href="https://github.com/wnzeuton" target="_blank" rel="noreferrer" className="pf-contact-link">github ↗</a>
+      <div className="pf-status">
+        <div className="pf-wip-dot" />
+        available for work
       </div>
-      <span className="card-tag" style={{ marginBottom: '0.75rem', display: 'inline-block' }}>{project.tag}</span>
-      {project.featured && <p className="project-wip">in progress</p>}
-      {project.detail.map(section => (
-        <div key={section.heading} className="project-section">
-          <h2 className="project-section-heading">{section.heading}</h2>
-          <p className="project-section-body">{section.body}</p>
-        </div>
-      ))}
-      {project.github && (
-        <a className="btn" href={project.github} target="_blank" rel="noreferrer" style={{ marginTop: '1rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-          <GitHubIcon /> view on github
-        </a>
-      )}
     </div>
   );
 }
 
 export default function App() {
+  const [tab, setTab] = useState("work");
   return (
-    <HashRouter>
-      <Routes>
-        <Route path="/" element={<Portfolio />} />
-        <Route path="/projects/:id" element={<ProjectPage />} />
-      </Routes>
-    </HashRouter>
+    <>
+      <style>{styles}</style>
+      <div className="pf-root">
+        <div className="pf-inner">
+          <div className="gold-bar" />
+          <p className="pf-eyebrow">cs @ cornell, class of 2028 · based in nyc</p>
+          <h1 className="pf-name">will nzeuton</h1>
+          <p className="pf-phonetic">/ wil·zoo·ton /</p>
+          <nav className="pf-nav">
+            {["work", "about", "notes", "contact"].map(t => (
+              <button key={t} className={`pf-nav-item${tab === t ? " active" : ""}`} onClick={() => setTab(t)}>{t}</button>
+            ))}
+            <a className="pf-nav-right" href="/portfolio/resume.pdf" download>résumé ↓</a>
+          </nav>
+          {tab === "work"    && <WorkTab />}
+          {tab === "about"   && <AboutTab />}
+          {tab === "notes"   && <NotesTab />}
+          {tab === "contact" && <ContactTab />}
+          <div className="pf-footer">
+            <span className="pf-footer-txt">last updated may 2026</span>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }

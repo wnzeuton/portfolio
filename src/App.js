@@ -349,8 +349,8 @@ const PROJECTS = [
 
 const EXPERIENCE = [
   {
-    org: 'ascend capital group',
-    role: 'ai engineer intern',
+    org: "walter's pet styles",
+    role: 'independent ai engineer contractor',
     date: 'may 2026 – present',
     desc: '',
     skills: ['python', 'fastapi', 'postgresql', 'langchain', 'aws', 'docker', 'github', 'github actions', 'ci/cd', 'agent design', 'agentic workflow', 'llm', 'prompt engineering', 'tool use', 'cloud deployment', 'ai engineering', 'webhook', 'rest api', 'full stack', 'communication', 'fast typer'],

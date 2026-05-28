@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const GOLD_DIM = "#a8824a";
 
@@ -77,7 +77,7 @@ const styles = `
     animation: fadeUp 0.6s 0.2s ease-out both;
   }
 
-  .pf-phonetic { font-size: 15px; font-weight: 300; color: #a08c6e; letter-spacing: 0.08em; margin-top: 0.6rem; margin-bottom: 3.75rem; animation: fadeUp 0.5s 0.35s ease-out both; }
+  .pf-phonetic { font-family: 'Shippori Mincho', serif; font-size: 19px; font-weight: 400; color: #7a6040; letter-spacing: 0.06em; margin-top: 0.75rem; margin-bottom: 3.75rem; animation: fadeUp 0.5s 0.35s ease-out both; }
 
   .pf-gh-activity { border-left: 3px solid #c9a96e; padding-left: 11px; margin-bottom: 1.75rem; animation: fadeUp 0.5s 0.55s ease-out both; display: flex; flex-direction: column; gap: 10px; }
   .pf-commit { display: flex; align-items: center; gap: 9px; overflow: hidden; }
@@ -307,7 +307,7 @@ function SectionRow({ en }) {
 
 function ExpandedProject({ project, onClose }) {
   return (
-    <div className="pf-project-expanded">
+    <div className="pf-project-expanded" style={{ flex: 1, marginBottom: 0, boxSizing: "border-box" }}>
       <div className="pf-pmeta" style={{ marginBottom: "0.4rem" }}>
         <span className="pf-porg">{project.org}</span>
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
@@ -443,7 +443,11 @@ const SLIDE = "0.55s cubic-bezier(0.4, 0, 0.2, 1) both";
 function WorkTab() {
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState(null);
+  const [slideDir, setSlideDir] = useState("right");
   const [closing, setClosing] = useState(false);
+  const gridRef = useRef(null);
+  const [gridHeight, setGridHeight] = useState(0);
+  useEffect(() => { if (gridRef.current) setGridHeight(gridRef.current.offsetHeight); }, []);
   const q = search.toLowerCase().trim();
   const match = (p) => !q || p.title.includes(q) || p.desc.includes(q) || p.stack.some(s => s.includes(q)) || p.org.includes(q);
   const matchExp = (e) => !q || e.org.includes(q) || e.role.includes(q) || e.desc.includes(q);
@@ -453,8 +457,15 @@ function WorkTab() {
     setTimeout(() => { setExpandedId(null); setClosing(false); }, 560);
   };
 
-  const gridAnim = expandedId ? (closing ? `slideInLeft ${SLIDE}` : `slideOutLeft ${SLIDE}`) : "none";
-  const panelAnim = closing ? `slideOutRight ${SLIDE}` : `slideInRight ${SLIDE}`;
+  const fromLeft = slideDir === "left";
+  const gridAnim = expandedId
+    ? closing
+      ? `${fromLeft ? "slideInRight" : "slideInLeft"} ${SLIDE}`
+      : `${fromLeft ? "slideOutRight" : "slideOutLeft"} ${SLIDE}`
+    : "none";
+  const panelAnim = closing
+    ? `${fromLeft ? "slideOutLeft" : "slideOutRight"} ${SLIDE}`
+    : `${fromLeft ? "slideInLeft" : "slideInRight"} ${SLIDE}`;
 
   return (
     <div>
@@ -464,17 +475,17 @@ function WorkTab() {
       </div>
       <SectionRow en="projects" />
 
-      <div style={{ position: "relative", overflow: "hidden" }}>
+      <div ref={gridRef} style={{ position: "relative", overflow: "hidden" }}>
         <div className="pf-projects-grid" style={{
           animation: gridAnim,
           pointerEvents: expandedId ? "none" : "auto",
         }}>
           {PROJECTS.map(p => (
-            <ProjectCard key={p.id} p={p} q={q} match={match} onClick={() => !closing && setExpandedId(p.id)} />
+            <ProjectCard key={p.id} p={p} q={q} match={match} onClick={() => { if (closing) return; setSlideDir(PROJECTS.indexOf(p) % 2 === 0 ? "left" : "right"); setExpandedId(p.id); }} />
           ))}
         </div>
         {expandedId && (
-          <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 5, animation: panelAnim, pointerEvents: closing ? "none" : "auto" }}>
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: gridHeight || "auto", zIndex: 5, animation: panelAnim, pointerEvents: closing ? "none" : "auto", display: "flex", alignItems: "center" }}>
             <ExpandedProject
               project={PROJECTS.find(p => p.id === expandedId)}
               onClose={handleClose}

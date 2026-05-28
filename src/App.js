@@ -3,6 +3,7 @@ import { HashRouter, Routes, Route, Link, useParams, useNavigate } from 'react-r
 import './App.css';
 
 const THEMES = [
+  { id: 'gold',     dot: '#c49a2a' },
   { id: 'default',  dot: '#7f77dd' },
   { id: 'midnight', dot: '#4d9de0' },
   { id: 'forest',   dot: '#2ec090' },
@@ -653,7 +654,7 @@ function Footer() {
 
 function Portfolio() {
   const [tab, setTab] = useState('work');
-  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'default');
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'gold');
   const [mode, setMode] = useState(() => localStorage.getItem('mode') || 'dark');
 
   useEffect(() => {

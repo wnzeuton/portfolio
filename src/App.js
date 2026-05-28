@@ -303,10 +303,45 @@ function ExpandedProject({ project, originRect, onClose }) {
   );
 }
 
+function timeAgo(date) {
+  const s = Math.floor((Date.now() - date) / 1000);
+  if (s < 60) return 'just now';
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  return d === 1 ? 'yesterday' : `${d}d ago`;
+}
+
+function useLatestCommit() {
+  const [data, setData] = useState(null);
+  useEffect(() => {
+    fetch('https://api.github.com/users/wnzeuton/events/public')
+      .then(r => r.ok ? r.json() : null)
+      .then(events => {
+        if (!events) return;
+        const push = events.find(e => e.type === 'PushEvent');
+        if (!push) return;
+        const msg = push.payload.commits?.slice(-1)[0]?.message?.split('\n')[0];
+        if (!msg) return;
+        setData({
+          repo: push.repo.name.replace('wnzeuton/', ''),
+          message: msg,
+          ago: timeAgo(new Date(push.created_at)),
+          url: `https://github.com/${push.repo.name}`,
+        });
+      })
+      .catch(() => {});
+  }, []);
+  return data;
+}
+
 function WorkTab() {
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState(null);
   const [originRect, setOriginRect] = useState(null);
+  const commit = useLatestCommit();
   const q = search.toLowerCase().trim();
   const match = (p) => !q || p.title.includes(q) || p.desc.includes(q) || p.stack.some(s => s.includes(q)) || p.org.includes(q);
   const matchExp = (e) => !q || e.org.includes(q) || e.role.includes(q) || e.desc.includes(q);
@@ -358,6 +393,14 @@ function WorkTab() {
         <span className="pf-also-lbl">also worked with</span>
         {["java", "tensorflow", "next.js", "linux", "bash", "numpy", "pandas"].map(s => <span key={s} className="pf-pill">{s}</span>)}
       </div>
+      {commit && (
+        <div style={{ marginTop: "2rem", display: "flex", alignItems: "center", gap: "7px" }}>
+          <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#c9a96e", flexShrink: 0 }} />
+          <span style={{ fontSize: "12px", fontWeight: 300, color: "#6a5540", letterSpacing: "0.03em" }}>
+            last push · <a href={commit.url} target="_blank" rel="noreferrer" style={{ color: "#a8824a", textDecoration: "none" }}>{commit.repo}</a> · "{commit.message}" · {commit.ago}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

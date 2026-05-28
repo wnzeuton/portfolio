@@ -62,10 +62,14 @@ const styles = `
 
   .pf-phonetic { font-size: 12px; font-weight: 300; color: #a08c6e; letter-spacing: 0.08em; margin-top: 0.6rem; margin-bottom: 3.75rem; animation: fadeUp 0.5s 0.35s ease-out both; }
 
-  .pf-commit { display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem; border-left: 3px solid #c9a96e; padding-left: 10px; animation: fadeUp 0.5s 0.55s ease-out both; }
-  .pf-commit-txt { font-size: 12px; font-weight: 300; color: #6a5540; letter-spacing: 0.04em; }
-  .pf-commit-repo { color: #a8824a; text-decoration: none; transition: opacity 0.2s; }
-  .pf-commit-repo:hover { opacity: 0.7; }
+  .pf-commit { display: flex; align-items: center; gap: 9px; margin-bottom: 1.5rem; border-left: 3px solid #c9a96e; padding-left: 11px; animation: fadeUp 0.5s 0.55s ease-out both; overflow: hidden; }
+  .pf-commit-repo { font-size: 12px; font-weight: 400; color: #a8824a; text-decoration: none; white-space: nowrap; flex-shrink: 0; }
+  .pf-commit-repo:hover { opacity: 0.75; }
+  .pf-commit-sep { font-size: 11px; color: #c4b49a; flex-shrink: 0; }
+  .pf-commit-msg { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 11.5px; color: #3d3228; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .pf-commit-sha { font-family: 'SFMono-Regular', Consolas, monospace; font-size: 11px; color: #6a5540; border: 0.5px solid #c4b49a; padding: 1px 6px; border-radius: 3px; text-decoration: none; white-space: nowrap; flex-shrink: 0; transition: background 0.2s; }
+  .pf-commit-sha:hover { background: #ede6d8; }
+  .pf-commit-age { font-size: 11px; color: #8a7560; white-space: nowrap; flex-shrink: 0; }
 
   .pf-nav {
     display: flex; gap: 3.5rem; margin-bottom: 3rem;
@@ -338,8 +342,10 @@ function useLatestCommit() {
             setData({
               repo,
               message: c.commit.message.split('\n')[0],
+              sha: c.sha.slice(0, 7),
+              shaUrl: c.html_url,
               ago: timeAgo(new Date(c.commit.author.date)),
-              url: `https://github.com/wnzeuton/${repo}`,
+              repoUrl: `https://github.com/wnzeuton/${repo}`,
             });
           });
       })
@@ -492,9 +498,16 @@ export default function App() {
           <p className="pf-phonetic" style={{ marginBottom: commit ? "0.75rem" : undefined }}>/ wil·zoo·ton /</p>
           {commit && (
             <div className="pf-commit">
-              <span className="pf-commit-txt">
-                last push · <a href={commit.url} target="_blank" rel="noreferrer" className="pf-commit-repo">{commit.repo}</a> · &ldquo;{commit.message}&rdquo; · {commit.ago}
-              </span>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+                <circle cx="8" cy="8" r="3.5" stroke="#a87828" strokeWidth="1.5"/>
+                <line x1="0" y1="8" x2="4.5" y2="8" stroke="#a87828" strokeWidth="1.5"/>
+                <line x1="11.5" y1="8" x2="16" y2="8" stroke="#a87828" strokeWidth="1.5"/>
+              </svg>
+              <a href={commit.repoUrl} target="_blank" rel="noreferrer" className="pf-commit-repo">{commit.repo}</a>
+              <span className="pf-commit-sep">/</span>
+              <span className="pf-commit-msg">{commit.message}</span>
+              <a href={commit.shaUrl} target="_blank" rel="noreferrer" className="pf-commit-sha">{commit.sha}</a>
+              <span className="pf-commit-age">{commit.ago}</span>
             </div>
           )}
           <nav className="pf-nav">

@@ -77,7 +77,15 @@ const styles = `
   .pf-heatmap-lbl { font-size: 10px; font-weight: 300; color: #7a6040; letter-spacing: 0.1em; text-transform: uppercase; }
   .pf-heatmap-total { font-size: 11px; font-weight: 400; color: #a8824a; }
   .pf-heatmap-cells { display: flex; gap: 4px; }
-  .pf-heatmap-cell { width: 18px; height: 18px; border-radius: 3px; flex-shrink: 0; }
+  .pf-heatmap-cell { width: 18px; height: 18px; border-radius: 3px; flex-shrink: 0; position: relative; }
+  .pf-heatmap-cell::after {
+    content: attr(data-tip); position: absolute; bottom: calc(100% + 6px); left: 50%;
+    transform: translateX(-50%); background: #1a1612; color: #dbb84a;
+    font-family: 'SFMono-Regular', Consolas, monospace; font-size: 10px;
+    white-space: nowrap; padding: 3px 7px; border-radius: 3px;
+    pointer-events: none; opacity: 0; transition: opacity 0.15s; z-index: 10;
+  }
+  .pf-heatmap-cell:hover::after { opacity: 1; }
   .pf-heatmap-days { display: flex; gap: 4px; }
   .pf-heatmap-day { width: 18px; font-size: 9px; color: #a08c6e; text-align: center; font-weight: 300; letter-spacing: 0; }
 
@@ -352,6 +360,7 @@ function useWeekHeatmap() {
 
 function WeekHeatmap({ data }) {
   const cellColor = n => n === 0 ? '#d4cabb' : n <= 3 ? '#c9b07a' : n <= 7 ? '#c9a050' : '#a87828';
+  const fmtDate = key => new Date(key + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toLowerCase();
   return (
     <div className="pf-heatmap">
       <div className="pf-heatmap-top">
@@ -359,7 +368,8 @@ function WeekHeatmap({ data }) {
       </div>
       <div className="pf-heatmap-cells">
         {data.days.map(d => (
-          <div key={d.key} className="pf-heatmap-cell" style={{ background: cellColor(d.count) }} title={`${d.count} commit${d.count !== 1 ? 's' : ''} · ${d.key}`} />
+          <div key={d.key} className="pf-heatmap-cell" style={{ background: cellColor(d.count) }}
+            data-tip={`${d.count === 0 ? 'no' : d.count} commit${d.count !== 1 ? 's' : ''} · ${fmtDate(d.key)}`} />
         ))}
       </div>
       <div className="pf-heatmap-days">

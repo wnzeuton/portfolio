@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const GOLD_DIM = "#a8824a";
 
@@ -23,6 +23,18 @@ const styles = `
   @keyframes slideInRight {
     from { transform: translateX(105%); }
     to   { transform: translateX(0); }
+  }
+  @keyframes slideOutLeft {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-105%); }
+  }
+  @keyframes slideInLeft {
+    from { transform: translateX(-105%); }
+    to   { transform: translateX(0); }
+  }
+  @keyframes slideOutRight {
+    from { transform: translateX(0); }
+    to   { transform: translateX(105%); }
   }
 
   .pf-root {
@@ -426,12 +438,23 @@ const ProjectCard = ({ p, q, match, onClick }) => (
   </div>
 );
 
+const SLIDE = "0.55s cubic-bezier(0.4, 0, 0.2, 1) both";
+
 function WorkTab() {
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState(null);
+  const [closing, setClosing] = useState(false);
   const q = search.toLowerCase().trim();
   const match = (p) => !q || p.title.includes(q) || p.desc.includes(q) || p.stack.some(s => s.includes(q)) || p.org.includes(q);
   const matchExp = (e) => !q || e.org.includes(q) || e.role.includes(q) || e.desc.includes(q);
+
+  const handleClose = () => {
+    setClosing(true);
+    setTimeout(() => { setExpandedId(null); setClosing(false); }, 560);
+  };
+
+  const gridAnim = expandedId ? (closing ? `slideInLeft ${SLIDE}` : `slideOutLeft ${SLIDE}`) : "none";
+  const panelAnim = closing ? `slideOutRight ${SLIDE}` : `slideInRight ${SLIDE}`;
 
   return (
     <div>
@@ -443,18 +466,18 @@ function WorkTab() {
 
       <div style={{ position: "relative", overflow: "hidden" }}>
         <div className="pf-projects-grid" style={{
-          visibility: expandedId ? "hidden" : "visible",
+          animation: gridAnim,
           pointerEvents: expandedId ? "none" : "auto",
         }}>
           {PROJECTS.map(p => (
-            <ProjectCard key={p.id} p={p} q={q} match={match} onClick={() => setExpandedId(p.id)} />
+            <ProjectCard key={p.id} p={p} q={q} match={match} onClick={() => !closing && setExpandedId(p.id)} />
           ))}
         </div>
         {expandedId && (
-          <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 5, animation: "slideInRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) both" }}>
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 5, animation: panelAnim, pointerEvents: closing ? "none" : "auto" }}>
             <ExpandedProject
               project={PROJECTS.find(p => p.id === expandedId)}
-              onClose={() => setExpandedId(null)}
+              onClose={handleClose}
             />
           </div>
         )}

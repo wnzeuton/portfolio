@@ -256,7 +256,7 @@ const PROJECTS = [
   {
     id: 'booking-intake-agent',
     featured: true,
-    tag: 'ascend capital group · may 2026',
+    tag: "walter's pet styles · may 2026",
     title: 'booking intake agent',
     desc: "a local pet grooming salon is managing bookings across gmail and squarespace forms, each one requiring manual lookup, cross-referencing, and a reply. i'm building an agent that ingests both channels, parses natural language requests into structured booking data, checks against existing reservations, and routes to the owner for one-tap approval.",
     stack: ['Python', 'FastAPI', 'LangChain', 'Llama 3', 'PostgreSQL', 'AWS'],

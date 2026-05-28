@@ -60,9 +60,10 @@ const styles = `
     animation: fadeUp 0.6s 0.2s ease-out both;
   }
 
-  .pf-phonetic { font-size: 12px; font-weight: 300; color: #a08c6e; letter-spacing: 0.08em; margin-top: 0.6rem; margin-bottom: 3.75rem; animation: fadeUp 0.5s 0.35s ease-out both; }
+  .pf-phonetic { font-size: 15px; font-weight: 300; color: #a08c6e; letter-spacing: 0.08em; margin-top: 0.6rem; margin-bottom: 3.75rem; animation: fadeUp 0.5s 0.35s ease-out both; }
 
-  .pf-commit { display: flex; align-items: center; gap: 9px; margin-bottom: 1.5rem; border-left: 3px solid #c9a96e; padding-left: 11px; animation: fadeUp 0.5s 0.55s ease-out both; overflow: hidden; }
+  .pf-gh-activity { border-left: 3px solid #c9a96e; padding-left: 11px; margin-bottom: 1.75rem; animation: fadeUp 0.5s 0.55s ease-out both; display: flex; flex-direction: column; gap: 10px; }
+  .pf-commit { display: flex; align-items: center; gap: 9px; overflow: hidden; }
   .pf-commit-repo { font-size: 12px; font-weight: 400; color: #a8824a; text-decoration: none; white-space: nowrap; flex-shrink: 0; }
   .pf-commit-repo:hover { opacity: 0.75; }
   .pf-commit-sep { font-size: 11px; color: #c4b49a; flex-shrink: 0; }
@@ -70,6 +71,15 @@ const styles = `
   .pf-commit-sha { font-family: 'SFMono-Regular', Consolas, monospace; font-size: 11px; color: #6a5540; border: 0.5px solid #c4b49a; padding: 1px 6px; border-radius: 3px; text-decoration: none; white-space: nowrap; flex-shrink: 0; transition: background 0.2s; }
   .pf-commit-sha:hover { background: #ede6d8; }
   .pf-commit-age { font-size: 11px; color: #8a7560; white-space: nowrap; flex-shrink: 0; }
+
+  .pf-heatmap { display: flex; flex-direction: column; gap: 4px; }
+  .pf-heatmap-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+  .pf-heatmap-lbl { font-size: 10px; font-weight: 300; color: #7a6040; letter-spacing: 0.1em; text-transform: uppercase; }
+  .pf-heatmap-total { font-size: 11px; font-weight: 400; color: #a8824a; }
+  .pf-heatmap-cells { display: flex; gap: 4px; }
+  .pf-heatmap-cell { width: 18px; height: 18px; border-radius: 3px; flex-shrink: 0; }
+  .pf-heatmap-days { display: flex; gap: 4px; }
+  .pf-heatmap-day { width: 18px; font-size: 9px; color: #a08c6e; text-align: center; font-weight: 300; letter-spacing: 0; }
 
   .pf-nav {
     display: flex; gap: 3.5rem; margin-bottom: 3rem;
@@ -312,6 +322,54 @@ function ExpandedProject({ project, originRect, onClose }) {
   );
 }
 
+function useWeekHeatmap() {
+  const [data, setData] = useState(null);
+  useEffect(() => {
+    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    fetch(`https://api.github.com/search/commits?q=author:wnzeuton+author-date:>=${since}&sort=author-date&order=desc&per_page=100`, {
+      headers: { Accept: 'application/vnd.github+json' },
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(result => {
+        if (!result?.items) return;
+        const map = {};
+        result.items.forEach(c => {
+          const day = c.commit.author.date.split('T')[0];
+          map[day] = (map[day] || 0) + 1;
+        });
+        const days = [];
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+          const key = d.toISOString().split('T')[0];
+          days.push({ key, count: map[key] || 0, label: 'SMTWTFS'[d.getUTCDay()] });
+        }
+        setData({ days, total: result.items.length });
+      })
+      .catch(() => {});
+  }, []);
+  return data;
+}
+
+function WeekHeatmap({ data }) {
+  const cellColor = n => n === 0 ? '#d4cabb' : n <= 3 ? '#c9b07a' : n <= 7 ? '#c9a050' : '#a87828';
+  return (
+    <div className="pf-heatmap">
+      <div className="pf-heatmap-top">
+        <span className="pf-heatmap-lbl">commits this week</span>
+        <span className="pf-heatmap-total">{data.total}</span>
+      </div>
+      <div className="pf-heatmap-cells">
+        {data.days.map(d => (
+          <div key={d.key} className="pf-heatmap-cell" style={{ background: cellColor(d.count) }} title={`${d.count} commit${d.count !== 1 ? 's' : ''} · ${d.key}`} />
+        ))}
+      </div>
+      <div className="pf-heatmap-days">
+        {data.days.map(d => <span key={d.key} className="pf-heatmap-day">{d.label}</span>)}
+      </div>
+    </div>
+  );
+}
+
 function timeAgo(date) {
   const s = Math.floor((Date.now() - date) / 1000);
   if (s < 60) return 'just now';
@@ -487,6 +545,7 @@ function ContactTab() {
 export default function App() {
   const [tab, setTab] = useState("work");
   const commit = useLatestCommit();
+  const heatmap = useWeekHeatmap();
   return (
     <>
       <style>{styles}</style>
@@ -496,18 +555,23 @@ export default function App() {
           <p className="pf-eyebrow">cs @ cornell, class of 2028 · based in nyc</p>
           <h1 className="pf-name">will nzeuton</h1>
           <p className="pf-phonetic" style={{ marginBottom: commit ? "0.75rem" : undefined }}>/ wil·zoo·ton /</p>
-          {commit && (
-            <div className="pf-commit">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
-                <circle cx="8" cy="8" r="3.5" stroke="#a87828" strokeWidth="1.5"/>
-                <line x1="0" y1="8" x2="4.5" y2="8" stroke="#a87828" strokeWidth="1.5"/>
-                <line x1="11.5" y1="8" x2="16" y2="8" stroke="#a87828" strokeWidth="1.5"/>
-              </svg>
-              <a href={commit.repoUrl} target="_blank" rel="noreferrer" className="pf-commit-repo">{commit.repo}</a>
-              <span className="pf-commit-sep">/</span>
-              <span className="pf-commit-msg">{commit.message}</span>
-              <a href={commit.shaUrl} target="_blank" rel="noreferrer" className="pf-commit-sha">{commit.sha}</a>
-              <span className="pf-commit-age">{commit.ago}</span>
+          {(commit || heatmap) && (
+            <div className="pf-gh-activity">
+              {commit && (
+                <div className="pf-commit">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+                    <circle cx="8" cy="8" r="3.5" stroke="#a87828" strokeWidth="1.5"/>
+                    <line x1="0" y1="8" x2="4.5" y2="8" stroke="#a87828" strokeWidth="1.5"/>
+                    <line x1="11.5" y1="8" x2="16" y2="8" stroke="#a87828" strokeWidth="1.5"/>
+                  </svg>
+                  <a href={commit.repoUrl} target="_blank" rel="noreferrer" className="pf-commit-repo">{commit.repo}</a>
+                  <span className="pf-commit-sep">/</span>
+                  <span className="pf-commit-msg">{commit.message}</span>
+                  <a href={commit.shaUrl} target="_blank" rel="noreferrer" className="pf-commit-sha">{commit.sha}</a>
+                  <span className="pf-commit-age">{commit.ago}</span>
+                </div>
+              )}
+              {heatmap && <WeekHeatmap data={heatmap} />}
             </div>
           )}
           <nav className="pf-nav">

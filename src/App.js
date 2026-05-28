@@ -302,7 +302,7 @@ function ExpandedProject({ project, originRect, onClose, onAnimationEnd }) {
     el.style.transition = "none";
     el.style.transform = `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`;
     void el.offsetWidth; // force reflow so browser commits the start state
-    el.style.transition = "transform 1.4s cubic-bezier(0.16, 1, 0.3, 1)";
+    el.style.transition = "transform 2.2s cubic-bezier(0.16, 1, 0.3, 1)";
     el.style.transform = "none";
     const onEnd = () => { onAnimationEnd?.(); el.removeEventListener('transitionend', onEnd); };
     el.addEventListener('transitionend', onEnd);
@@ -310,7 +310,7 @@ function ExpandedProject({ project, originRect, onClose, onAnimationEnd }) {
 
   return (
     <div ref={ref} className="pf-project-expanded">
-      <div style={{ opacity: originRect ? 0 : 1, transition: "opacity 0.4s ease 0.15s" }}>
+      <div style={{ opacity: originRect ? 0 : 1, transition: "opacity 0.7s ease 0.3s" }}>
         <div className="pf-pmeta" style={{ marginBottom: "0.4rem" }}>
           <span className="pf-porg">{project.org}</span>
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>

@@ -278,7 +278,8 @@ const PROJECTS = [
 ];
 
 const EXPERIENCE = [
-  { org: "walter's pet styles", role: "ai engineer · contractor", date: "may 2026 – present", desc: "automated booking intake with langchain agent, fastapi, aws ec2, and ci/cd. reduced processing time by 95%." },
+  { org: "eulerity", role: "backend engineer intern", date: "jun 2026 – present", desc: "" },
+  { org: "walter's pet styles", role: "ai engineer · contractor", date: "may 2026 – jun 2026", desc: "automated booking intake with langchain agent, fastapi, aws ec2, and ci/cd. reduced processing time by 95%." },
   { org: "ascend @ linkedin", role: "software engineer intern", date: "oct 2025 – present", desc: "real-time pii detection pipeline, prompt-level risk logging, role-based classifier for enterprise ai." },
   { org: "cornell hack4impact", role: "developer", date: "aug 2025 – present", desc: "member portal connecting 800+ volunteers across 13 chapters.", website: "https://www.cornellh4i.org/" },
   { org: "food for all nyc", role: "founder & cto", date: "sep 2021 – present", desc: "10,000+ lbs rescued. $20k raised. co-authored nyc school food rescue legislation.", website: "https://foodforallnyc.org", tags: ["leadership", "food security", "nonprofit"] },

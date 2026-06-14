@@ -278,8 +278,7 @@ const PROJECTS = [
 ];
 
 const EXPERIENCE = [
-  { org: "eulerity", role: "backend engineer intern", date: "jun 2026 – present", desc: "" },
-  { org: "walter's pet styles", role: "ai engineer · contractor", date: "may 2026 – jun 2026", desc: "automated booking intake with langchain agent, fastapi, aws ec2, and ci/cd. reduced processing time by 95%." },
+  { org: "eulerity", role: "software engineer intern", date: "jun 2026 – present", desc: "" },
   { org: "ascend @ linkedin", role: "software engineer intern", date: "oct 2025 – present", desc: "real-time pii detection pipeline, prompt-level risk logging, role-based classifier for enterprise ai." },
   { org: "cornell hack4impact", role: "developer", date: "aug 2025 – present", desc: "member portal connecting 800+ volunteers across 13 chapters.", website: "https://www.cornellh4i.org/" },
   { org: "food for all nyc", role: "founder & cto", date: "sep 2021 – present", desc: "10,000+ lbs rescued. $20k raised. co-authored nyc school food rescue legislation.", website: "https://foodforallnyc.org", tags: ["leadership", "food security", "nonprofit"] },
@@ -287,6 +286,8 @@ const EXPERIENCE = [
 ];
 
 const NOTES = [
+  { id: 5, date: "jun 11, 2026", type: "short", content: "// most of what i call a decision was actually made before i started thinking about it." },
+  { id: 4, date: "jun 5, 2026", type: "short", content: "// sometimes the right move is to do the obvious thing and stop being clever about it." },
   { id: 0, date: "may 23, 2026", type: "short", content: "// i wish my github contributions heatmap was all green." },
   { id: 1, date: "may 23, 4:02 am", type: "short", content: "// have to be interestingly disciplined in order to learn an unfamiliar tech stack when claude code is so proficient. letting go of shipping speed in order to understand everything for my own sake is wearing me down." },
   { id: 2, date: "may 22, 2:05 am", type: "long", title: "balancing design for learning vs outcome", preview: "been workshopping the design of a summer project. part of my goal is to fill in some gaps of what i don't think i've done enough work in, but i'm coming to realize that what i want to learn doesn't always fit what is actually technically best for the project." },
@@ -618,7 +619,7 @@ export default function App() {
             {["work", "about", "notes", "contact"].map(t => (
               <button key={t} className={`pf-nav-item${tab === t ? " active" : ""}`} onClick={() => setTab(t)}>{t}</button>
             ))}
-            <a className="pf-nav-right" href="/portfolio/resume.pdf" download>résumé ↓</a>
+            <a className="pf-nav-right" href="/portfolio/resume.pdf" download="Will_Nzeuton_Resume.pdf">résumé ↓</a>
           </nav>
           {tab === "work"    && <WorkTab />}
           {tab === "about"   && <AboutTab />}

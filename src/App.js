@@ -278,7 +278,7 @@ const PROJECTS = [
 ];
 
 const EXPERIENCE = [
-  { org: "eulerity", role: "software engineer intern", date: "jun 2026 – present", desc: "scalable production data pipelines, high-performance backend endpoints, ci infrastructure, and llm-driven workflow automation for enterprise-scale systems." },
+  { org: "eulerity", role: "software engineer intern", date: "jun 2026 – present", desc: "scalable production data pipelines, high-performance backend endpoints, internal tooling, ci infrastructure, and llm-driven workflow automation for enterprise-scale systems.", tags: ["software engineering", "backend", "data engineering", "data pipelines", "cloud", "gcp", "google cloud", "ci/cd", "testing", "devops", "ai", "llm", "automation", "apis", "startup", "internship"] },
   { org: "ascend @ linkedin", role: "software engineer intern", date: "oct 2025 – present", desc: "real-time pii detection pipeline, prompt-level risk logging, role-based classifier for enterprise ai." },
   { org: "cornell hack4impact", role: "developer", date: "aug 2025 – present", desc: "member portal connecting 800+ volunteers across 13 chapters.", website: "https://www.cornellh4i.org/" },
   { org: "food for all nyc", role: "founder & cto", date: "sep 2021 – present", desc: "10,000+ lbs rescued. $20k raised. co-authored nyc school food rescue legislation.", website: "https://foodforallnyc.org", tags: ["leadership", "food security", "nonprofit"] },

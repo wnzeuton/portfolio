@@ -627,7 +627,7 @@ export default function App() {
           {tab === "notes"   && <NotesTab />}
           {tab === "contact" && <ContactTab />}
           <div className="pf-footer">
-            <span className="pf-footer-txt">last updated may 2026</span>
+            <span className="pf-footer-txt">last updated aug 2026</span>
           </div>
         </div>
       </div>

@@ -286,9 +286,10 @@ const EXPERIENCE = [
 ];
 
 const NOTES = [
-  { id: 5, date: "jun 11, 2026", type: "short", content: "// most of what i call a decision was actually made before i started thinking about it." },
-  { id: 4, date: "jun 5, 2026", type: "short", content: "// sometimes the right move is to do the obvious thing and stop being clever about it." },
-  { id: 0, date: "may 23, 2026", type: "short", content: "// i wish my github contributions heatmap was all green." },
+  { id: 6, date: "aug 18, 12:12 am", type: "long", title: "eulerity internship reflections", preview: "just wrapped up my internship at eulerity; it was a genuinely great experience, one i really enjoyed. looking back, what i want most out of future roles is high ownership, work that demands real product thinking, and a culture that feels authentic.\n\none of the things that's surprised me as i've picked my own projects back up is how much variance there can be in the quality of ai output. at eulerity we had a bunch of skills that explicitly laid out exact coding procedures and guidelines for claude to follow, plus automated copilot reviews on every pr. since it wasn't costing me anything to run more tokens, it was easy to get away with a vague or underspecified prompt, because everything around it was structured enough that claude would still do well anyway. working in my own environment now, i'm back to basics: using less powerful models for smaller tasks, reminding claude to ask for explicit approval before making certain calls on its own, and breaking instructions into smaller pieces instead of dumping everything at once. before, handing claude a jira ticket and access to the whole codebase usually gave it enough context to make real progress on its own. it's a good reminder though: losing those guardrails again is a decent check on whether my fundamentals with these tools are actually where they need to be." },
+  { id: 5, date: "jun 11, 1:24 pm", type: "short", content: "// most of what i call a decision was actually made before i started thinking about it." },
+  { id: 4, date: "jun 5, 12:52 pm", type: "short", content: "// sometimes the right move is to do the obvious thing and stop being clever about it." },
+  { id: 0, date: "may 23, 4:53 am", type: "short", content: "// i wish my github contributions heatmap was all green." },
   { id: 1, date: "may 23, 4:02 am", type: "short", content: "// have to be interestingly disciplined in order to learn an unfamiliar tech stack when claude code is so proficient. letting go of shipping speed in order to understand everything for my own sake is wearing me down." },
   { id: 2, date: "may 22, 2:05 am", type: "long", title: "balancing design for learning vs outcome", preview: "been workshopping the design of a summer project. part of my goal is to fill in some gaps of what i don't think i've done enough work in, but i'm coming to realize that what i want to learn doesn't always fit what is actually technically best for the project." },
   { id: 3, date: "may 12, 11:53 pm", type: "short", content: "// noticed claude keeps telling me to go to sleep when it thinks i'm overthinking or acting anxious. kinda weird but it's usually right." },
@@ -561,7 +562,7 @@ function NotesTab() {
           <p className="pf-note-date">{n.date}</p>
           {n.type === "short"
             ? <p className="pf-note-short">{n.content}</p>
-            : <><p className="pf-note-title">{n.title}</p><p className="pf-note-preview">{n.preview}</p></>
+            : <><p className="pf-note-title">{n.title}</p>{n.preview.split("\n\n").map((para, i) => <p key={i} className="pf-note-preview">{para}</p>)}</>
           }
         </div>
       ))}

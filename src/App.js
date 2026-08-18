@@ -238,7 +238,7 @@ const styles = `
   .pf-note-date { font-size: 10px; color: #8a7560; font-weight: 300; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
   .pf-note-short { font-size: 13px; font-weight: 300; color: #3d3228; line-height: 1.8; }
   .pf-note-title { font-family: 'Shippori Mincho', serif; font-size: 17px; font-weight: 500; color: #1a1612; margin-bottom: 0.5rem; }
-  .pf-note-preview { font-size: 13px; font-weight: 300; color: #5a4e3e; line-height: 1.85; max-width: 520px; }
+  .pf-note-preview { font-size: 13px; font-weight: 300; color: #5a4e3e; line-height: 1.85; }
 
   .pf-contact-link {
     font-family: 'Shippori Mincho', serif; font-size: 28px; font-weight: 400; color: #1a1612;

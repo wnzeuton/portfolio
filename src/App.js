@@ -254,8 +254,8 @@ const PROJECTS = [
   {
     id: "booking-intake-agent", org: "walter's pet styles", date: "may 2026", title: "booking intake agent",
     desc: "a local pet grooming salon managing bookings across gmail and squarespace, each one requiring manual lookup and a reply. building an agent that ingests both channels, parses natural language into structured data, and routes to the owner for one-tap approval.",
-    detail: "listens for incoming messages via gmail pub/sub push notifications and a custom squarespace form webhook. claude extracts a structured booking request from the raw text and writes it to postgres with status pending. the owner gets an approval email with a one-line summary and replies y to confirm. playwright then automates the CRM entry in gingr directly, so no data gets entered manually at any step. deployed on ec2 via aws ecr, with github actions handling ci/cd through ssm.",
-    stack: ["python", "langchain", "fastapi", "claude api", "postgresql", "aws"], wip: true, github: "https://github.com/wnzeuton/booking-intake-agent",
+    detail: "listens for incoming messages via gmail pub/sub push notifications and a custom squarespace form webhook. a langchain agent running openai's gpt-oss-120b extracts a structured booking request from the raw text and writes it to postgres with status pending. the owner gets an approval email with a one-line summary and replies y to confirm. the plan is for playwright to then push the confirmed booking straight into gingr — that step hasn't been built yet, so confirmed bookings still get entered into gingr by hand for now. deployed on ec2 via aws ecr, with github actions handling ci/cd through ssm.",
+    stack: ["python", "langchain", "fastapi", "postgresql", "aws"], wip: true, github: "https://github.com/wnzeuton/booking-intake-agent",
   },
   {
     id: "vitalink", org: "independent", date: "apr 2026", title: "vitalink",
@@ -278,11 +278,11 @@ const PROJECTS = [
 ];
 
 const EXPERIENCE = [
-  { org: "eulerity", role: "software engineer intern", date: "jun 2026 – present", desc: "scalable production data pipelines, high-performance backend endpoints, internal tooling, ci infrastructure, and llm-driven workflow automation for enterprise-scale systems.", tags: ["software engineering", "backend", "data engineering", "data pipelines", "cloud", "gcp", "google cloud", "ci/cd", "testing", "devops", "ai", "llm", "automation", "apis", "startup", "internship"] },
-  { org: "ascend @ linkedin", role: "software engineer intern", date: "oct 2025 – present", desc: "real-time pii detection pipeline, prompt-level risk logging, role-based classifier for enterprise ai." },
-  { org: "cornell hack4impact", role: "developer", date: "aug 2025 – present", desc: "member portal connecting 800+ volunteers across 13 chapters.", website: "https://www.cornellh4i.org/" },
-  { org: "food for all nyc", role: "founder & cto", date: "sep 2021 – present", desc: "10,000+ lbs rescued. $20k raised. co-authored nyc school food rescue legislation.", website: "https://foodforallnyc.org", tags: ["leadership", "food security", "nonprofit"] },
-  { org: "stuyai club", role: "president", date: "may 2024 – jun 2025", desc: "30-lesson ai curriculum and pytorch recommendation system used by 3,000+ peers.", tags: ["leadership", "teaching", "education"] },
+  { org: "eulerity", role: "software engineer intern", date: "jun 2026 – aug 2026", desc: "scalable production data pipelines, high-performance backend endpoints, internal tooling, ci infrastructure, and llm-driven workflow automation for enterprise-scale systems.", tags: ["software engineering", "backend", "data engineering", "data pipelines", "java", "junit", "testing", "devops", "ci/cd", "cloud", "gcp", "google cloud", "ai", "llm", "claude code", "automation", "apis", "internship"] },
+  { org: "ascend @ linkedin", role: "software engineer intern", date: "oct 2025 – present", desc: "real-time pii detection pipeline, prompt-level risk logging, role-based classifier for enterprise ai.", tags: ["software engineering", "backend", "ai", "ml", "nlp", "security", "privacy", "python", "fastapi", "postgresql", "openai", "chrome extension", "pii", "classifier", "enterprise ai", "internship"] },
+  { org: "cornell hack4impact", role: "developer", date: "aug 2025 – present", desc: "member portal connecting 800+ volunteers across 13 chapters.", website: "https://www.cornellh4i.org/", tags: ["software engineering", "full stack", "frontend", "backend", "web development", "typescript", "react", "express", "supabase", "oauth", "nonprofit", "volunteer", "team project"] },
+  { org: "food for all nyc", role: "founder & cto", date: "sep 2021 – present", desc: "10,000+ lbs rescued. $20k raised. co-authored nyc school food rescue legislation.", website: "https://foodforallnyc.org", tags: ["leadership", "entrepreneurship", "founder", "nonprofit", "food security", "policy", "fundraising", "web development"] },
+  { org: "stuyai club", role: "president", date: "may 2024 – jun 2025", desc: "30-lesson ai curriculum and pytorch recommendation system used by 3,000+ peers.", tags: ["leadership", "teaching", "education", "ai", "ml", "pytorch", "recommendation systems", "curriculum design"] },
 ];
 
 const NOTES = [

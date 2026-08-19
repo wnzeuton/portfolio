@@ -254,7 +254,7 @@ const PROJECTS = [
   {
     id: "booking-intake-agent", org: "walter's pet styles", date: "may 2026", title: "booking intake agent",
     desc: "a local pet grooming salon managing bookings across gmail and squarespace, each one requiring manual lookup and a reply. building an agent that ingests both channels, parses natural language into structured data, and routes to the owner for one-tap approval.",
-    detail: "listens for incoming messages via gmail pub/sub push notifications and a custom squarespace form webhook. a langchain agent running openai's gpt-oss-120b extracts a structured booking request from the raw text and writes it to postgres with status pending. the owner gets an approval email with a one-line summary and replies y to confirm. the plan is for playwright to then push the confirmed booking straight into gingr — that step hasn't been built yet, so confirmed bookings still get entered into gingr by hand for now. deployed on ec2 via aws ecr, with github actions handling ci/cd through ssm.",
+    detail: "listens for incoming messages via gmail pub/sub push notifications and a custom squarespace form webhook. a langchain agent running openai's gpt-oss-120b extracts a structured booking request from the raw text and writes it to postgres with status pending. the owner gets an approval email with a one-line summary and replies y to confirm. the plan is for playwright to then push the confirmed booking straight into gingr, deployed on ec2 via aws ecr, with github actions handling ci/cd through ssm.",
     stack: ["python", "langchain", "fastapi", "postgresql", "aws"], wip: true, github: "https://github.com/wnzeuton/booking-intake-agent",
   },
   {

@@ -594,7 +594,7 @@ export default function App() {
       <div className="pf-root">
         <div className="pf-inner">
           <div className="gold-bar" />
-          <p className="pf-eyebrow">cs @ cornell, class of 2028 · based in nyc</p>
+          <p className="pf-eyebrow">cs @ cornell · based in nyc</p>
           <h1 className="pf-name">will nzeuton</h1>
           <p className="pf-phonetic" style={{ marginBottom: commit ? "0.75rem" : undefined }}>/ wil·zoo·ton /</p>
           {(commit || heatmap) && (

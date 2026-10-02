@@ -280,7 +280,7 @@ const PROJECTS = [
 const EXPERIENCE = [
   { org: "eulerity", role: "software engineer intern", date: "jun 2026 – aug 2026", desc: "scalable production data pipelines, high-performance backend endpoints, internal tooling, ci infrastructure, and llm-driven workflow automation for enterprise-scale systems.", tags: ["software engineering", "backend", "data engineering", "data pipelines", "java", "junit", "testing", "devops", "ci/cd", "cloud", "gcp", "google cloud", "ai", "llm", "claude code", "automation", "apis", "internship"] },
   { org: "ascend @ linkedin", role: "software engineer intern", date: "oct 2025 – present", desc: "real-time pii detection pipeline, prompt-level risk logging, role-based classifier for enterprise ai.", tags: ["software engineering", "backend", "ai", "ml", "nlp", "security", "privacy", "python", "fastapi", "postgresql", "openai", "chrome extension", "pii", "classifier", "enterprise ai", "internship"] },
-  { org: "cornell hack4impact", role: "developer", date: "aug 2025 – present", desc: "member portal connecting 800+ volunteers across 13 chapters.", website: "https://www.cornellh4i.org/", tags: ["software engineering", "full stack", "frontend", "backend", "web development", "typescript", "react", "express", "supabase", "oauth", "nonprofit", "volunteer", "team project"] },
+  { org: "cornell hack4impact", role: "developer", date: "aug 2025 – present", desc: "rag pipeline for a nutrition education chatbot serving children in nigeria and the u.s.", website: "https://www.cornellh4i.org/", tags: ["software engineering", "backend", "ai", "artificial intelligence", "ml", "machine learning", "llm", "rag", "retrieval augmented generation", "nlp", "chatbot", "openai", "supabase", "pgvector", "postgresql", "vector search", "reranking", "evaluation", "nonprofit", "education", "team project"] },
   { org: "food for all nyc", role: "founder & cto", date: "sep 2021 – present", desc: "10,000+ lbs rescued. $20k raised. directly inspired nyc school food rescue legislation.", website: "https://foodforallnyc.org", tags: ["leadership", "entrepreneurship", "founder", "nonprofit", "food security", "policy", "fundraising", "web development"] },
   { org: "stuyai club", role: "president", date: "may 2024 – jun 2025", desc: "30-lesson ai curriculum and pytorch recommendation system used by 3,000+ peers.", tags: ["leadership", "teaching", "education", "ai", "ml", "pytorch", "recommendation systems", "curriculum design"] },
 ];
@@ -517,9 +517,9 @@ function AboutTab() {
   return (
     <div>
       <p className="pf-about-bio">
-        i build things that ship and things that matter.<br />
-        currently deep in ml systems and applied ai.<br />
-        213 wpm.
+        so far: backend, infra, and applied ai.<br />
+        my favorite part of any project is the architecture.<br />
+        fun fact: i type at 213 wpm.
       </p>
       <div className="pf-about-grid">
         <div>
@@ -627,7 +627,7 @@ export default function App() {
           {tab === "notes"   && <NotesTab />}
           {tab === "contact" && <ContactTab />}
           <div className="pf-footer">
-            <span className="pf-footer-txt">last updated sep 2026</span>
+            <span className="pf-footer-txt">last updated oct 2026</span>
           </div>
         </div>
       </div>
